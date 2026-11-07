@@ -35,7 +35,7 @@ export class StudyService {
       userId: userId,
     });
 
-    return { success: true, data: study };
+    return { success: true, data: study.map((item) => this.withStepIds(item)) };
   }
 
   async getStudyByIdAndUserId(
@@ -51,7 +51,46 @@ export class StudyService {
       return { success: false, error: StudyError.STUDY_NOT_FOUND };
     }
 
-    return { success: true, data: study };
+    return { success: true, data: this.withStepIds(study) };
+  }
+
+  async getStepByIdAndUserId(
+    stepId: string,
+    userId: string,
+  ): Promise<IStep | null> {
+    const studies = await this.repositoryStudy.find({ userId });
+
+    for (const storedStudy of studies) {
+      const study = this.withStepIds(storedStudy);
+      for (const module of study.studyPlanJSON) {
+        for (const level of module.levels) {
+          const step = level.steps.find((item) => item.id === stepId);
+          if (step) return step;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private withStepIds(study: IStudy): IStudy {
+    return {
+      ...study,
+      studyPlanJSON: study.studyPlanJSON.map((module, moduleIndex) => ({
+        ...module,
+        levels: module.levels.map((level, levelIndex) => ({
+          ...level,
+          steps: level.steps.map((step, stepIndex) => ({
+            ...step,
+            id:
+              step.id ||
+              generateId(
+                `study-step:${study._id}:${moduleIndex}:${levelIndex}:${stepIndex}`,
+              ),
+          })),
+        })),
+      })),
+    };
   }
 
   async createNewStudy(

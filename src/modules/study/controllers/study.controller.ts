@@ -11,11 +11,12 @@ import {
   Param,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import type { IModule, IStep, IStudy } from '@models/study';
+import type { IModule, ISettings, IStep, IStudy } from '@models/study';
 import { StudyService } from '@services/studyService/StudyService';
 import type { IControllerResponse } from '@core/types/Response.type';
 import type { INotation } from '@core/types/Notation.type';
 import type { IQuiz } from '@models/study';
+import { randomUUID } from 'crypto';
 
 @Controller('study')
 @UseGuards(AuthGuard('jwt'))
@@ -159,7 +160,12 @@ export class StudyController {
       { x: 80, y: 900 },
       { x: 30, y: 1300 },
       { x: 20, y: 1700 },
+      { x: 70, y: 2100 },
     ];
+    const pythonDockerFile =
+      'FROM python:3.11-slim\nWORKDIR /app\nCOPY . .\nCMD ["tail", "-f", "/dev/null"]';
+    const terminalDockerFile =
+      'FROM ubuntu:24.04\nWORKDIR /workspace\nCOPY . .\nCMD ["tail", "-f", "/dev/null"]';
 
     const levels: IModule['levels'] = levelContent.map((content, levelIndex) => {
       const makeQuiz = (title: string, description: string): IQuiz => ({
@@ -217,6 +223,13 @@ export class StudyController {
             type: 'code' as const,
             code: `${content.exercise}\n\nПроверьте решение как минимум на двух обычных примерах и одном граничном случае.`,
           },
+          ...(levelIndex === 0
+            ? [{
+                title: 'Первые команды Linux',
+                description: 'Откройте терминал, выполните pwd и ls, затем создайте каталог через mkdir и перейдите в него командой cd.',
+                type: 'terminal' as const,
+              }]
+            : []),
           {
             title: `Проверка знаний: ${content.title}`,
             description: 'Ответьте на вопросы и разберите поведение кода.',
@@ -230,12 +243,49 @@ export class StudyController {
             code: content.advancedExercise,
             exam,
           },
-        ].map((step, stepIndex) => ({
-          ...step,
-          isCompleted: levelIndex === 0 && stepIndex < 3,
-          isCurrent: levelIndex === 0 && stepIndex === 3,
-          position: stepPositions[stepIndex],
-        })),
+        ].map((step, stepIndex) => {
+          let settings: ISettings = { startCommand: [] };
+
+          if (step.type === 'code' || step.type === 'exam') {
+            settings = {
+              language: 'python',
+              dockerFile: pythonDockerFile,
+              initProject: {
+                name: `python-level-${levelIndex + 1}-step-${stepIndex + 1}`,
+                title: step.title,
+                subtitle: content.description,
+                language: 'python',
+              },
+              entryFile: 'main.py',
+              timeLimitMs: 5000,
+              memoryLimitMb: 256,
+              startCommand: ['python', '-u', 'main.py'],
+            };
+          } else if (step.type === 'terminal') {
+            settings = {
+              language: 'bash',
+              dockerFile: terminalDockerFile,
+              initProject: {
+                name: 'linux-terminal-basics',
+                title: step.title,
+                subtitle: 'Практика базовых команд Linux',
+                language: 'bash',
+              },
+              timeLimitMs: 30000,
+              memoryLimitMb: 128,
+              startCommand: ['/bin/bash'],
+            };
+          }
+
+          return {
+            ...step,
+            id: randomUUID(),
+            isCompleted: levelIndex === 0 && stepIndex < 3,
+            isCurrent: levelIndex === 0 && stepIndex === 3,
+            position: stepPositions[stepIndex],
+            settings,
+          };
+        }),
       };
     });
 
@@ -449,9 +499,8 @@ export class StudyController {
       );
     }
 
-    steps.forEach((step) => {
-      level.steps.push(step);
-    });
+    const stepsWithIds = steps.map((step) => ({ ...step, id: randomUUID() }));
+    level.steps.push(...stepsWithIds);
 
     study.studyPlanJSON[data.moduleIndex].levels[data.levelIndex] = level;
 
@@ -464,7 +513,7 @@ export class StudyController {
       throw new NotFoundException(resultChanged.error);
     }
 
-    return { success: true, data: steps };
+    return { success: true, data: stepsWithIds };
   }
 
   @Post('steps/doc')

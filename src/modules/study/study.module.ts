@@ -16,5 +16,6 @@ dotenv.config();
   imports: [GeneralModule],
   providers: [StudyService, ProfileService, AIProvider, FileStorageProvider],
   controllers: [StudyController],
+  exports: [StudyService],
 })
 export class StudyModule {}

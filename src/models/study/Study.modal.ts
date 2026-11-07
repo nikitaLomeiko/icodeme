@@ -1,6 +1,7 @@
 import { BaseEntity } from '@core/types/BaseEntity.abstract';
 import { INotation } from '@core/types/Notation.type';
 import { IQuiz } from './types/Quiz.types';
+import { IProjectMeta } from '@models/project';
 
 export interface IStudy extends BaseEntity, INotation {
   userId: string;
@@ -35,8 +36,23 @@ export interface ILevel extends INotation {
   isCurrent: boolean;
 }
 
+export interface ISettings {
+  language?: string;
+  dockerFile?: string;
+  initProject?: IProjectMeta;
+  entryFile?: string;
+  timeLimitMs?: number;
+  memoryLimitMb?: number;
+  tests?: {
+    stdin: string;
+    expectedStdout: string;
+  }[];
+  startCommand: string[];
+}
+
 export interface IStep extends INotation {
-  type: 'document' | 'code' | 'quiz' | 'exam';
+  id: string;
+  type: 'document' | 'code' | 'quiz' | 'exam' | 'terminal';
   isCompleted: boolean;
   isCurrent: boolean;
   document?: string;
@@ -44,7 +60,7 @@ export interface IStep extends INotation {
   code?: string;
   quiz?: IQuiz;
   exam?: IQuiz;
-  // experience: number;
+  settings: ISettings;
 }
 
 export const StudyKey = 'Study';

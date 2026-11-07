@@ -11,28 +11,61 @@ import {
 } from '@nestjs/common';
 import { DockerService, IContainerResult } from '@services/dockerService';
 import { DockerError } from '@services/dockerService/types/Error.types';
-import { FileNode, IProject } from '@models/project';
+import { IProject } from '@models/project';
 import { IControllerResponse } from '@core/types/Response.type';
+import { StudyService } from '@services/studyService/StudyService';
 
 @Controller('ide/docker')
 @UseGuards(AuthGuard('jwt'))
 export class IdeDockerController {
-  constructor(private readonly dockerService: DockerService) {}
+  constructor(
+    private readonly dockerService: DockerService,
+    private readonly studyService: StudyService,
+  ) {}
 
   @Post('run')
   async createAndRunContainer(
     @Request() req,
-    @Body() data: { project: IProject },
+    @Body() data: { project: IProject; stepId: string },
   ): Promise<IControllerResponse<IContainerResult>> {
-    if (!data.project?.meta || !Array.isArray(data.project.dir))
+    if (!data?.project?.meta || !Array.isArray(data.project.dir))
       throw new BadRequestException('Invalid project');
-    data.project.userId = req.user.userId;
-    this.dockerService.validateProject(data.project);
-    const mockDockerCode = this.buildDockerfile(data.project.dir);
+    if (typeof data.stepId !== 'string' || !data.stepId.trim())
+      throw new BadRequestException('Invalid step id');
+
+    const step = await this.studyService.getStepByIdAndUserId(
+      data.stepId,
+      req.user.userId,
+    );
+    if (!step) throw new NotFoundException('Step not found');
+    if (!['code', 'terminal', 'exam'].includes(step.type))
+      throw new BadRequestException('Step cannot run code');
+
+    const dockerFile = step.settings?.dockerFile;
+    if (typeof dockerFile !== 'string' || !dockerFile.trim())
+      throw new BadRequestException('Step has no Dockerfile');
+    const startCommand = step.settings?.startCommand;
+    if (
+      !Array.isArray(startCommand) ||
+      startCommand.length === 0 ||
+      startCommand.some((part) => typeof part !== 'string' || !part.trim())
+    )
+      throw new BadRequestException('Step has no start command');
+
+    const project: IProject = {
+      ...data.project,
+      userId: req.user.userId,
+      meta: {
+        ...data.project.meta,
+        language: step.settings.language || data.project.meta.language,
+      },
+    };
+    this.dockerService.validateProject(project);
 
     const result = await this.dockerService.createAndRunContainer(
-      data.project,
-      mockDockerCode,
+      project,
+      dockerFile,
+      startCommand,
     );
 
     if (!result.success) {
@@ -42,25 +75,6 @@ export class IdeDockerController {
     }
 
     return result;
-  }
-
-  private buildDockerfile(dir: FileNode[] | undefined): string {
-    let copySource = '.';
-
-    const hasSrcFolder = (dir || []).some(
-      (node) => node.type === 'folder' && node.name === 'src',
-    );
-
-    if (hasSrcFolder) {
-      copySource = 'src/';
-    } else if ((dir || []).some((node) => node.name === 'main.py')) {
-      copySource = '.';
-    }
-
-    return `FROM python:3.11-slim
-            WORKDIR /app
-            COPY ${copySource} .
-            CMD ["tail", "-f", "/dev/null"]`;
   }
 
   @Post('send')

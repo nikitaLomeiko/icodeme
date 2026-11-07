@@ -83,6 +83,7 @@ export class DockerService {
   async createAndRunContainer(
     project: IProject,
     dockerfileContent: string,
+    startCommand: string[],
   ): Promise<IServiceResponse<IContainerResult, DockerError>> {
     const basePath = path.join(this.path, project.userId, project.meta.name);
 
@@ -109,7 +110,7 @@ export class DockerService {
         baseImageName,
       );
 
-      const result = await this.startInteractiveSession(container);
+      const result = await this.startInteractiveSession(container, startCommand);
 
       return {
         success: true,
@@ -352,11 +353,12 @@ export class DockerService {
 
   private async startInteractiveSession(
     container: Docker.Container,
+    startCommand: string[],
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       container.exec(
         {
-          Cmd: ['python', '-u', 'main.py'],
+          Cmd: startCommand,
           AttachStdin: true,
           AttachStdout: true,
           AttachStderr: true,
