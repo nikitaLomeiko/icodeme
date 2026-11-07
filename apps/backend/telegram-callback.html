@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram авторизация</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 500px;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .success {
+      color: #4caf50;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+    .error {
+      color: #f44336;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+    .token-info {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 12px;
+      word-break: break-all;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <h2>🔄 Telegram авторизация</h2>
+    <div class="spinner"></div>
+    <p>Обработка данных...</p>
+  </div>
+
+  <script>
+    (function() {
+      const container = document.getElementById('container');
+      const hash = window.location.hash.substring(1);
+      
+      if (!hash) {
+        container.innerHTML = `
+          <h2>❌ Нет данных авторизации</h2>
+          <p>Пожалуйста, войдите через Telegram</p>
+        `;
+        return;
+      }
+
+      // Парсим hash в объект
+      const params = {};
+      hash.split('&').forEach(function(p) {
+        const kv = p.split('=');
+        params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+      });
+
+      console.log('Telegram auth data:', params);
+
+      // Отправляем на сервер для верификации
+      fetch('http://127.0.0.1:3000/oauth/telegram/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        console.log('Server response:', data);
+        
+        if (data.success && data.data && data.data.token) {
+          container.innerHTML = `
+            <h2>✅ Успешная авторизация!</h2>
+            <p class="success">Добро пожаловать!</p>
+            <div class="token-info">
+              <strong>Token:</strong> ${data.data.token}<br><br>
+              <strong>Refresh Token:</strong> ${data.data.refreshToken}
+            </div>
+          `;
+          
+          // Сохраняем токены
+          localStorage.setItem('token', data.data.token);
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+          
+          // Редирект (раскомментируй когда нужно)
+          // window.location.href = 'http://localhost:4200/dashboard';
+        } else {
+          container.innerHTML = `
+            <h2>❌ Ошибка авторизации</h2>
+            <p class="error">${data.message || data.error || 'Неизвестная ошибка'}</p>
+          `;
+        }
+      })
+      .catch(function(e) {
+        console.error('Auth error:', e);
+        container.innerHTML = `
+          <h2>❌ Ошибка сети</h2>
+          <p class="error">Не удалось подключиться к серверу</p>
+          <p style="font-size: 12px; color: #999;">${e.message || e}</p>
+        `;
+      });
+    })();
+  </script>
+</body>
+</html>

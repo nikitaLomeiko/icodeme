@@ -1,0 +1,1 @@
+export { BaseMongoRepository } from './BaseMongoRepository';
