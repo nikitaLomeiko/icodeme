@@ -1,0 +1,17 @@
+:root {
+  --bg-layout: #ffffff;
+  --bg-layout-to: #d197e67d;
+  --bg-layout-bottom: #88888833;
+  --bg-layout-right: #f2deffa5;
+
+  --logo-text-color: #00000027;
+}
+
+[data-theme="dark"] {
+  --bg-layout: #05050a;
+  --bg-layout-to: #c31dff24;
+  --bg-layout-bottom: #2b04441c;
+  --bg-layout-right: #000000a6;
+
+  --logo-text-color: #ffffff32;
+}

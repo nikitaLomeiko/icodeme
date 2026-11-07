@@ -1,0 +1,1 @@
+export { TestRoute as default } from "@/pages-root/study-step/quiz-step.page";

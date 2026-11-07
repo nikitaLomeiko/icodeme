@@ -1,0 +1,425 @@
+:root {
+  /* + */
+  --ui-primary: #8d2de7;
+  --ui-primary-hover: #ab55fc;
+
+  --ui-primary-active: #047857;
+  --ui-secondary: #8b5cf6;
+  --ui-secondary-hover: #7c3aed;
+  --ui-secondary-active: #6d28d9;
+  --ui-accent: #f59e0b;
+  --ui-accent-hover: #d97706;
+  --ui-accent-active: #b45309;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+
+  /* + */
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  /* + */
+  --ui-background: #ebebeb;
+  --ui-background-secondary: #f3f0e7;
+  --ui-background-tertiary: rgb(224, 224, 224);
+
+  --ui-text: #111827;
+  --ui-text-secondary: #374151;
+  --ui-text-muted: #6b7280;
+
+  /* + */
+  --ui-text-inverse: #ffffff;
+  --ui-border: #5858584b;
+
+  --ui-border-focus: #10b981;
+  --ui-border-light: #f3f4f6;
+  --ui-placeholder: #9ca3af;
+  --ui-disabled: #f3f4f6;
+  --ui-fill: #9a9a9a78;
+
+  --ui-brand-gradient-start: #10b981;
+  --ui-brand-gradient-end: #14b8a6;
+  --ui-brand-shadow: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] {
+  --ui-primary: #8d2de7;
+  --ui-primary-hover: #ab55fc;
+  --ui-primary-active: #6ee7b7;
+  --ui-secondary-hover: #c4b5fd;
+  --ui-secondary-active: #ddd6fe;
+  --ui-accent: #fbbf24;
+  --ui-accent-hover: #fcd34d;
+  --ui-accent-active: #fde047;
+  --ui-success: #10b981;
+  --ui-success-hover: #34d399;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #fbbf24;
+  --ui-error: #f87171;
+  --ui-error-hover: #fca5a5;
+  --ui-info: #60a5fa;
+  --ui-info-hover: #93c5fd;
+
+  --ui-background: #111827;
+  --ui-background-secondary: #1f2937;
+  --ui-background-tertiary: #0a0e16;
+  --ui-text: #f9fafb;
+  --ui-text-secondary: #e5e7eb;
+  --ui-text-muted: #9ca3af;
+  --ui-text-inverse: #111827;
+  --ui-border: #374151;
+  --ui-border-focus: #10b981;
+  --ui-border-light: #1f2937;
+  --ui-placeholder: #6b7280;
+  --ui-disabled: #1f2937;
+  --ui-fill: #4b5563;
+
+  --ui-brand-gradient-start: #10b981;
+  --ui-brand-gradient-end: #14b8a6;
+  --ui-brand-shadow: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="blue"] {
+  --ui-primary: #3b82f6;
+  --ui-primary-hover: #2563eb;
+  --ui-primary-active: #1d4ed8;
+  --ui-secondary: #06b6d4;
+  --ui-secondary-hover: #0891b2;
+  --ui-secondary-active: #0e7490;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #eff6ff;
+  --ui-background-secondary: #dbeafe;
+  --ui-background-tertiary: #bfdbfe;
+  --ui-text: #1e3a8a;
+  --ui-text-secondary: #1e40af;
+  --ui-text-muted: #3b82f6;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #bfdbfe;
+  --ui-border-focus: #3b82f6;
+  --ui-border-light: #dbeafe;
+  --ui-placeholder: #93c5fd;
+  --ui-disabled: #dbeafe;
+  --ui-fill: #bfdbfe;
+
+  --ui-brand-gradient-start: #3b82f6;
+  --ui-brand-gradient-end: #06b6d4;
+  --ui-brand-shadow: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="purple"] {
+  --ui-primary: #8b5cf6;
+  --ui-primary-hover: #7c3aed;
+  --ui-primary-active: #6d28d9;
+  --ui-secondary: #c084fc;
+  --ui-secondary-hover: #a855f7;
+  --ui-secondary-active: #9333ea;
+  --ui-accent: #f59e0b;
+  --ui-accent-hover: #d97706;
+  --ui-accent-active: #b45309;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #faf5ff;
+  --ui-background-secondary: #f3e8ff;
+  --ui-background-tertiary: #e9d5ff;
+  --ui-text: #5b21b6;
+  --ui-text-secondary: #6d28d9;
+  --ui-text-muted: #8b5cf6;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #e9d5ff;
+  --ui-border-focus: #8b5cf6;
+  --ui-border-light: #f3e8ff;
+  --ui-placeholder: #c4b5fd;
+  --ui-disabled: #f3e8ff;
+  --ui-fill: #e9d5ff;
+
+  --ui-brand-gradient-start: #8b5cf6;
+  --ui-brand-gradient-end: #c084fc;
+  --ui-brand-shadow: rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="yellow"] {
+  --ui-primary: #eab308;
+  --ui-primary-hover: #ca8a04;
+  --ui-primary-active: #a16207;
+  --ui-secondary: #f59e0b;
+  --ui-secondary-hover: #d97706;
+  --ui-secondary-active: #b45309;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #fefce8;
+  --ui-background-secondary: #fef9c3;
+  --ui-background-tertiary: #fef08a;
+  --ui-text: #854d0e;
+  --ui-text-secondary: #a16207;
+  --ui-text-muted: #ca8a04;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #fef08a;
+  --ui-border-focus: #eab308;
+  --ui-border-light: #fef9c3;
+  --ui-placeholder: #fde047;
+  --ui-disabled: #fef9c3;
+  --ui-fill: #fef08a;
+
+  --ui-brand-gradient-start: #eab308;
+  --ui-brand-gradient-end: #f59e0b;
+  --ui-brand-shadow: rgba(234, 179, 8, 0.2);
+}
+
+[data-theme="red"] {
+  --ui-primary: #ef4444;
+  --ui-primary-hover: #dc2626;
+  --ui-primary-active: #b91c1c;
+  --ui-secondary: #f97316;
+  --ui-secondary-hover: #ea580c;
+  --ui-secondary-active: #c2410c;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #fef2f2;
+  --ui-background-secondary: #fee2e2;
+  --ui-background-tertiary: #fecaca;
+  --ui-text: #991b1b;
+  --ui-text-secondary: #b91c1c;
+  --ui-text-muted: #dc2626;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #fecaca;
+  --ui-border-focus: #ef4444;
+  --ui-border-light: #fee2e2;
+  --ui-placeholder: #fca5a5;
+  --ui-disabled: #fee2e2;
+  --ui-fill: #fecaca;
+
+  --ui-brand-gradient-start: #ef4444;
+  --ui-brand-gradient-end: #f97316;
+  --ui-brand-shadow: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="pink"] {
+  --ui-primary: #ec489a;
+  --ui-primary-hover: #db2777;
+  --ui-primary-active: #be185d;
+  --ui-secondary: #f472b6;
+  --ui-secondary-hover: #f43f5e;
+  --ui-secondary-active: #e11d48;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #fdf2f8;
+  --ui-background-secondary: #fce7f3;
+  --ui-background-tertiary: #fbcfe8;
+  --ui-text: #9d174d;
+  --ui-text-secondary: #be185d;
+  --ui-text-muted: #db2777;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #fbcfe8;
+  --ui-border-focus: #ec489a;
+  --ui-border-light: #fce7f3;
+  --ui-placeholder: #f9a8d4;
+  --ui-disabled: #fce7f3;
+  --ui-fill: #fbcfe8;
+
+  --ui-brand-gradient-start: #ec489a;
+  --ui-brand-gradient-end: #f472b6;
+  --ui-brand-shadow: rgba(236, 72, 153, 0.2);
+}
+
+[data-theme="cyan"] {
+  --ui-primary: #06b6d4;
+  --ui-primary-hover: #0891b2;
+  --ui-primary-active: #0e7490;
+  --ui-secondary: #22d3ee;
+  --ui-secondary-hover: #06b6d4;
+  --ui-secondary-active: #0891b2;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #ecfeff;
+  --ui-background-secondary: #cffafe;
+  --ui-background-tertiary: #a5f3fc;
+  --ui-text: #155e75;
+  --ui-text-secondary: #0e7490;
+  --ui-text-muted: #06b6d4;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #a5f3fc;
+  --ui-border-focus: #06b6d4;
+  --ui-border-light: #cffafe;
+  --ui-placeholder: #67e8f9;
+  --ui-disabled: #cffafe;
+  --ui-fill: #a5f3fc;
+
+  --ui-brand-gradient-start: #06b6d4;
+  --ui-brand-gradient-end: #22d3ee;
+  --ui-brand-shadow: rgba(6, 182, 212, 0.2);
+}
+
+[data-theme="orange"] {
+  --ui-primary: #f97316;
+  --ui-primary-hover: #ea580c;
+  --ui-primary-active: #c2410c;
+  --ui-secondary: #fb923c;
+  --ui-secondary-hover: #f97316;
+  --ui-secondary-active: #ea580c;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #fff7ed;
+  --ui-background-secondary: #ffedd5;
+  --ui-background-tertiary: #fed7aa;
+  --ui-text: #7c2d12;
+  --ui-text-secondary: #9a3412;
+  --ui-text-muted: #c2410c;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #fed7aa;
+  --ui-border-focus: #f97316;
+  --ui-border-light: #ffedd5;
+  --ui-placeholder: #fdba74;
+  --ui-disabled: #ffedd5;
+  --ui-fill: #fed7aa;
+
+  --ui-brand-gradient-start: #f97316;
+  --ui-brand-gradient-end: #fb923c;
+  --ui-brand-shadow: rgba(249, 115, 22, 0.2);
+}
+
+[data-theme="teal"] {
+  --ui-primary: #14b8a6;
+  --ui-primary-hover: #0d9488;
+  --ui-primary-active: #0f766e;
+  --ui-secondary: #2dd4bf;
+  --ui-secondary-hover: #14b8a6;
+  --ui-secondary-active: #0d9488;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #f0fdfa;
+  --ui-background-secondary: #ccfbf1;
+  --ui-background-tertiary: #99f6e4;
+  --ui-text: #115e59;
+  --ui-text-secondary: #0f766e;
+  --ui-text-muted: #14b8a6;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #99f6e4;
+  --ui-border-focus: #14b8a6;
+  --ui-border-light: #ccfbf1;
+  --ui-placeholder: #5eead4;
+  --ui-disabled: #ccfbf1;
+  --ui-fill: #99f6e4;
+
+  --ui-brand-gradient-start: #14b8a6;
+  --ui-brand-gradient-end: #2dd4bf;
+  --ui-brand-shadow: rgba(20, 184, 166, 0.2);
+}
+
+[data-theme="gray"] {
+  --ui-primary: #6b7280;
+  --ui-primary-hover: #4b5563;
+  --ui-primary-active: #374151;
+  --ui-secondary: #9ca3af;
+  --ui-secondary-hover: #6b7280;
+  --ui-secondary-active: #4b5563;
+  --ui-accent: #8b5cf6;
+  --ui-accent-hover: #7c3aed;
+  --ui-accent-active: #6d28d9;
+  --ui-success: #10b981;
+  --ui-success-hover: #059669;
+  --ui-warning: #f59e0b;
+  --ui-warning-hover: #d97706;
+  --ui-error: #ef4444;
+  --ui-error-hover: #dc2626;
+  --ui-info: #3b82f6;
+  --ui-info-hover: #2563eb;
+
+  --ui-background: #f9fafb;
+  --ui-background-secondary: #f3f4f6;
+  --ui-background-tertiary: #e5e7eb;
+  --ui-text: #111827;
+  --ui-text-secondary: #374151;
+  --ui-text-muted: #6b7280;
+  --ui-text-inverse: #ffffff;
+  --ui-border: #e5e7eb;
+  --ui-border-focus: #6b7280;
+  --ui-border-light: #f3f4f6;
+  --ui-placeholder: #9ca3af;
+  --ui-disabled: #f3f4f6;
+  --ui-fill: #e5e7eb;
+
+  --ui-brand-gradient-start: #6b7280;
+  --ui-brand-gradient-end: #9ca3af;
+  --ui-brand-shadow: rgba(107, 114, 128, 0.2);
+}
