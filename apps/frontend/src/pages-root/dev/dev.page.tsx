@@ -5,6 +5,7 @@ export const DevPage = () => {
   return (
     <IDE
       userId="4"
+      stepId="dev"
       meta={{
         language: "",
         name: "test",

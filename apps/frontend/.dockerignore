@@ -1,0 +1,11 @@
+node_modules
+.next
+coverage
+.env
+.env.*
+*.log
+.git
+.gitignore
+README.md
+tests
+docs
