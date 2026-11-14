@@ -1,27 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface AnimatedFormProps {
+interface IProps {
   mode: string;
   children: React.ReactNode;
 }
 
-export const AnimatedForm: React.FC<AnimatedFormProps> = ({
-  mode,
-  children,
-}) => {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return <>{children}</>;
-  }
-
+export const AnimatedForm: React.FC<IProps> = ({ mode, children }) => {
   return (
     <AnimatePresence initial={false} mode="wait">
       <motion.div

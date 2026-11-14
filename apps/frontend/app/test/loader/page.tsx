@@ -1,9 +1,9 @@
 "use client";
 
 import { Loader, Button, UIThemeProvider, ThemeEnum } from "@/shared/ui/kit";
-import { useTheme } from "@/shared/ui/kit/theme";
+import { useTheme } from "@/shared/ui/kit";
 
-export default function LoaderTestPage() {
+const LoaderTestPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
@@ -89,4 +89,6 @@ export default function LoaderTestPage() {
       </section>
     </div>
   );
-}
+};
+
+export default LoaderTestPage;

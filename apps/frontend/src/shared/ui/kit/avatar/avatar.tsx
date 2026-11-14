@@ -6,18 +6,21 @@ import { AvatarProps } from "./types/avatar.props";
 import { shapeClasses, sizeClasses } from "./styles/avatar.styles";
 import { getColorFromInitials, getContrastColor } from "./utils/color.manage";
 
-export const Avatar: React.FC<AvatarProps> = ({
-  src,
-  alt = "Avatar",
-  bgColor,
-  initials,
-  size = "md",
-  shape = "circle",
-  showDefaultIcon = true,
-  icon,
-  className = "",
-  onClick,
-}) => {
+interface IProps extends AvatarProps {}
+
+export const Avatar: React.FC<IProps> = (props) => {
+  const {
+    src,
+    alt = "Avatar",
+    bgColor,
+    initials,
+    size = "md",
+    shape = "circle",
+    showDefaultIcon = true,
+    icon,
+    className = "",
+    onClick,
+  } = props;
   const sizeClass = sizeClasses[size];
   const shapeClass = shapeClasses[shape];
 

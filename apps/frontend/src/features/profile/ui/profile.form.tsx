@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NameStep, AvatarStep, AboutStep, ChatStep } from "./steps";
@@ -11,22 +11,16 @@ import {
   profileSchema,
 } from "../model/validate/profile.schema";
 import { useProfileForm } from "../model/hooks/use.profile.form";
-import { useCreateProfileMutation } from "@/entities/profile";
-import { isApiError } from "@/shared/api";
-import { useRouter } from "next/navigation";
-import { useNotification } from "@/shared/ui/kit";
-import {
-  useCreateNewStudyMutation,
-  useTestGenerateModuleByStudyIdMutation,
-} from "@/entities/study";
 
-const TOTAL_STEPS = 4;
+const totalSteps = 4;
 
-interface ProfileFormProps {
-  onSubmit?: (data: ProfileFormData) => void;
+interface IProps {
+  onSubmit: (data: ProfileFormData) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
+export const ProfileForm: React.FC<IProps> = ({ onSubmit, isLoading, error }) => {
   const methods = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: "onBlur",
@@ -38,62 +32,11 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
     },
   });
 
-  const router = useRouter();
-  const notification = useNotification();
-  const [create, { isLoading }] = useCreateProfileMutation();
-  const [createModule, { isLoading: isLoadingModule }] =
-    useCreateNewStudyMutation();
-  const [generateModule, { isLoading: isLoadingGenerated }] =
-    useTestGenerateModuleByStudyIdMutation();
-  const [error, setError] = useState<string | null>(null);
-
   const { handleSubmit, getFieldState } = methods;
   const manageProfileForm = useProfileForm({
     methods,
-    totalSteps: TOTAL_STEPS,
+    totalSteps: totalSteps,
   });
-
-  const onSubmitForm = async (data: ProfileFormData) => {
-    setError(null);
-
-    const result = await create({
-      about: data.bio,
-      avatar: data.avatar,
-      name: data.name,
-    });
-
-    if (result.error && isApiError(result.error)) {
-      setError(result.error.data.message);
-      return;
-    }
-
-    const resultModule = await createModule(data.info);
-
-    if (resultModule.error && isApiError(resultModule.error)) {
-      setError(resultModule.error.data.message);
-      return;
-    }
-
-    if (!resultModule.data?.data?._id) {
-      return;
-    }
-
-    const resultGeneretedModulee = await generateModule(
-      resultModule.data?.data?._id,
-    );
-
-    if (
-      resultGeneretedModulee.error &&
-      isApiError(resultGeneretedModulee.error)
-    ) {
-      setError(resultGeneretedModulee.error.data.message);
-      return;
-    }
-
-    notification.success("The profile was successfully created");
-
-    router.push("/profile");
-  };
 
   const renderStep = () => {
     switch (manageProfileForm.currentStep) {
@@ -141,9 +84,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
     <FormProvider {...methods}>
       <StepWrapper
         {...manageProfileForm}
-        totalSteps={TOTAL_STEPS}
-        progress={((manageProfileForm.currentStep + 1) / TOTAL_STEPS) * 100}
-        handleSubmit={handleSubmit(onSubmitForm)}
+        totalSteps={totalSteps}
+        progress={((manageProfileForm.currentStep + 1) / totalSteps) * 100}
+        handleSubmit={handleSubmit(onSubmit)}
         title={stepTitles[manageProfileForm.currentStep]}
         error={error}
         isLoading={isLoading}

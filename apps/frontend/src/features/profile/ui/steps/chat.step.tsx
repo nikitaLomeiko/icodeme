@@ -9,14 +9,14 @@ import {
 } from "../../model/data/chat.data";
 import { MessageAnswer } from "../components/message.answer";
 
-interface ChatStepProps {
+interface IProps {
   onChange: (value: string) => void;
   error?: string;
 }
 
-const TYPING_DURATION_MS = 700;
+const typingDurationMs = 700;
 
-export const ChatStep: React.FC<ChatStepProps> = ({ onChange }) => {
+export const ChatStep: React.FC<IProps> = ({ onChange }) => {
   const [messages, setMessages] = useState<IChatMessage[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
@@ -45,10 +45,10 @@ export const ChatStep: React.FC<ChatStepProps> = ({ onChange }) => {
       const questionTimer = setTimeout(() => {
         pushBotMessage(chatQuestions[0].text);
         setIsTyping(false);
-      }, TYPING_DURATION_MS);
+      }, typingDurationMs);
 
       timers.push(questionTimer);
-    }, TYPING_DURATION_MS);
+    }, typingDurationMs);
 
     timers.push(introTimer);
 
@@ -86,7 +86,7 @@ export const ChatStep: React.FC<ChatStepProps> = ({ onChange }) => {
         setIsTyping(false);
         onChange(JSON.stringify(answersRef.current));
       }
-    }, TYPING_DURATION_MS);
+    }, typingDurationMs);
 
     timersRef.current.push(timer);
   };
@@ -114,6 +114,7 @@ export const ChatStep: React.FC<ChatStepProps> = ({ onChange }) => {
               <div className="max-h-[150px] overflow-y-auto chat-scroll flex flex-col gap-2 pr-1">
                 {currentQuestion.options.map((option, index) => (
                   <MessageAnswer
+                    key={option}
                     index={index}
                     onSelectOption={handleSelectOption}
                     option={option}

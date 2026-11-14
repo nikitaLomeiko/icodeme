@@ -1,7 +1,7 @@
 "use client";
 
 import { selectStudyPlans, useGetMyStudyByIdQuery } from "@/entities/study";
-import { useAppSelector } from "@/shared/lib/hooks";
+import { useAppSelector } from "@/shared/lib";
 
 export interface StudyStepParams {
   studyId?: string;

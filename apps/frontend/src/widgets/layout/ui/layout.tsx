@@ -7,15 +7,15 @@ import { Navbar } from "./components/navbar";
 
 import { Logotype } from "@/shared/ui/logotype";
 import { tabs } from "../model/data/tabs.data";
-import { useMobile } from "@/shared/lib/hooks";
-import { PageLoading } from "./page-loading";
+import { useMobile } from "@/shared/lib";
+import { PageLoading } from "@/shared/ui/kit";
 
-interface LayoutProps {
+interface IProps {
   children: React.ReactNode;
   isRenderSideBar?: boolean;
 }
 
-export const Layout: React.FC<LayoutProps> = ({
+export const Layout: React.FC<IProps> = ({
   children,
   isRenderSideBar = true,
 }) => {
@@ -71,7 +71,9 @@ export const Layout: React.FC<LayoutProps> = ({
               onSelectTab={console.log}
               tabs={tabs}
               isCollapsed={isSidebarCollapsed}
-              onToggleCollapsed={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+              onToggleCollapsed={() =>
+                setIsSidebarCollapsed((collapsed) => !collapsed)
+              }
             />
           )}
         </>

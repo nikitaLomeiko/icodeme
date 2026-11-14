@@ -1,1 +1,6 @@
-export { ExamRoute as default } from "@/pages-root/study-step/quiz-step.page";
+"use client";
+
+import { withAccount, withAuth } from "@/app/providers/auth";
+import { ExamRoute } from "@/pages-root/study-step";
+
+export default withAuth(withAccount(ExamRoute));

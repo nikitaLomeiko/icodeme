@@ -1,12 +1,15 @@
 import { ReactNode } from "react";
 import { Title } from "../../title";
 
-export const CardHeader: React.FC<{
+interface IProps {
   title?: string;
   subtitle?: string;
   action?: ReactNode;
   className?: string;
-}> = ({ title, subtitle, action, className }) => {
+}
+
+export const CardHeader: React.FC<IProps> = (props) => {
+  const { title, subtitle, action, className } = props;
   if (!title && !subtitle && !action) return null;
 
   return (

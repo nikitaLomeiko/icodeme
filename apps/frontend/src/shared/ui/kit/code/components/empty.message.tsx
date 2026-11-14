@@ -1,6 +1,6 @@
 import { FiCode } from "react-icons/fi";
 
-export const EmptyMessage = () => {
+export const EmptyMessage: React.FC = () => {
   return (
     <div className="flex-1 flex items-center justify-center bg-[var(--ui-background-tertiary)] h-full">
       <div className="text-center">

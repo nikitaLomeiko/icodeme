@@ -5,15 +5,12 @@ import { Button, Title } from "@/shared/ui/kit";
 import { FaArrowLeft } from "react-icons/fa";
 import { typeMode } from "../../../model/types/mode.types";
 
-interface AuthModeSwitcherProps {
+interface IProps {
   mode: typeMode;
   onModeChange: (mode: typeMode) => void;
 }
 
-export const AuthModeSwitcher: React.FC<AuthModeSwitcherProps> = ({
-  mode,
-  onModeChange,
-}) => {
+export const AuthModeSwitcher: React.FC<IProps> = ({ mode, onModeChange }) => {
   return (
     <div className="mt-3 text-center">
       {mode === "login" && (

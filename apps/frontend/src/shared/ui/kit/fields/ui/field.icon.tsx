@@ -1,6 +1,6 @@
 import React from "react";
 
-interface FieldIconProps {
+interface IProps {
   icon: React.ElementType;
   position?: "left" | "right";
   size?: number;
@@ -8,13 +8,14 @@ interface FieldIconProps {
   isTextarea?: boolean;
 }
 
-export const FieldIcon: React.FC<FieldIconProps> = ({
-  icon: Icon,
-  position = "left",
-  size = 16,
-  className = "",
-  isTextarea = false,
-}) => {
+export const FieldIcon: React.FC<IProps> = (props) => {
+  const {
+    icon: Icon,
+    position = "left",
+    size = 16,
+    className = "",
+    isTextarea = false,
+  } = props;
   const positionClasses = {
     left: "left-3",
     right: "right-3",

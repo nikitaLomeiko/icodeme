@@ -1,4 +1,8 @@
-import { RootState } from "@/app/providers/redux-store";
+import type { IAuthState } from "../types";
 
-export const selectUserId = (state: RootState) => state.auth.user.id;
-export const selectUserEmail = (state: RootState) => state.auth.user.email;
+interface AuthStoreState {
+  auth: IAuthState;
+}
+
+export const selectUserId = (state: AuthStoreState) => state.auth.user.id;
+export const selectUserEmail = (state: AuthStoreState) => state.auth.user.email;

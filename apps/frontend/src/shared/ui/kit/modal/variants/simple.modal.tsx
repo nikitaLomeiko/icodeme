@@ -3,15 +3,17 @@ import { ModalBody, ModalFooter } from "../components";
 import { Modal } from "../modal";
 import { ModalProps } from "../types";
 
-export const SimpleModal: React.FC<
-  Omit<ModalProps, "children"> & { message: string }
-> = ({ message, ...props }) => (
-  <Modal {...props}>
+interface IProps extends Omit<ModalProps, "children"> {
+  message: string;
+}
+
+export const SimpleModal: React.FC<IProps> = ({ message, ...modalProps }) => (
+  <Modal {...modalProps}>
     <ModalBody>
       <p className="text-[var(--ui-text)]">{message}</p>
     </ModalBody>
-    <ModalFooter variant={props.variant || "dark"}>
-      <Button variant="primary" onClick={props.onClose}>
+    <ModalFooter variant={modalProps.variant || "dark"}>
+      <Button variant="primary" onClick={modalProps.onClose}>
         Закрыть
       </Button>
     </ModalFooter>

@@ -4,20 +4,23 @@ import React from "react";
 import {
   ThemeEnum,
   ThemeSwitcherProps,
-  THEME_METADATA,
-} from "../types/theme.typs";
+  themeMetadata,
+} from "../types/theme.types";
 import { Button } from "../../buttons/button";
 import { FaPalette } from "react-icons/fa";
 import { useTheme } from "../lib";
-import { getAvailableThemes } from "../lib/utils/getAvailableThemes";
-import { getNextTheme } from "../lib/utils/getNextTheme";
+import { getAvailableThemes } from "../lib/utils/get-available-themes";
+import { getNextTheme } from "../lib/utils/get-next-theme";
 
-export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
-  limit,
-  availableThemes: customThemes,
-  showLabel = false,
-  className,
-}) => {
+interface IProps extends ThemeSwitcherProps {}
+
+export const ThemeSwitcher: React.FC<IProps> = (props) => {
+  const {
+    limit,
+    availableThemes: customThemes,
+    showLabel = false,
+    className,
+  } = props;
   const { theme, setTheme, availableThemes } = useTheme();
 
   const effectiveThemes =
@@ -28,7 +31,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     setTheme(next);
   };
 
-  const currentThemeMeta = THEME_METADATA[theme];
+  const currentThemeMeta = themeMetadata[theme];
 
   return (
     <Button

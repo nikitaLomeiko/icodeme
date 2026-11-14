@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { InputSize, InputVariant } from "./types";
 import { CellInput } from "./ui/cell.input";
 
-interface CodeFieldProps {
+interface IProps {
   length?: number;
   value: string;
   onChange: (value: string) => void;
@@ -17,37 +17,33 @@ interface CodeFieldProps {
   size?: InputSize;
 }
 
-export const CodeField: React.FC<CodeFieldProps> = ({
-  length = 6,
-  value,
-  onChange,
-  disabled = false,
-  error,
-  className = "",
-  autoFocus = true,
-  variant = "rounded",
-  size = "md",
-}) => {
-  const [code, setCode] = useState<string[]>(Array(length).fill(""));
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    if (value) {
-      const valueArray = value.split("").slice(0, length);
-      const newCode = [...code];
-      valueArray.forEach((char, idx) => {
-        newCode[idx] = char;
+export const CodeField: React.FC<IProps> = (props) => {
+  const {
+    length = 6,
+    value,
+    onChange,
+    disabled = false,
+    error,
+    className = "",
+    autoFocus = true,
+    variant = "rounded",
+    size = "md",
+  } = props;
+  const code = useMemo(() => {
+    const nextCode = Array<string>(length).fill("");
+    value
+      .split("")
+      .slice(0, length)
+      .forEach((char, index) => {
+        nextCode[index] = char;
       });
-      setCode(newCode);
-    } else {
-      setCode(Array(length).fill(""));
-    }
-  }, [value, length]);
+    return nextCode;
+  }, [length, value]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleCellChange = (index: number, inputValue: string) => {
     const newCode = [...code];
     newCode[index] = inputValue;
-    setCode(newCode);
     onChange(newCode.join(""));
 
     if (inputValue && index < length - 1) {
@@ -82,7 +78,6 @@ export const CodeField: React.FC<CodeFieldProps> = ({
       }
     });
 
-    setCode(newCode);
     onChange(newCode.join(""));
 
     const lastFilledIndex = Math.min(pastedArray.length, length - 1);

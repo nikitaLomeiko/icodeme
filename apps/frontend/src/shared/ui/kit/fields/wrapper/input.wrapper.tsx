@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { InputMode } from "../types";
 
-interface InputWrapperProps {
+interface IProps {
   id: string;
   label?: string;
   children: React.ReactNode;
@@ -19,20 +19,21 @@ interface InputWrapperProps {
   fullWidh?: boolean;
 }
 
-export const InputWrapper: React.FC<InputWrapperProps> = ({
-  id,
-  label,
-  children,
-  isFocused,
-  hasValue,
-  error,
-  required,
-  mode = "floating",
-  labelPosition = "center",
-  isIcon = false,
-  labelSize = "sm",
-  fullWidh = false,
-}) => {
+export const InputWrapper: React.FC<IProps> = (props) => {
+  const {
+    id,
+    label,
+    children,
+    isFocused,
+    hasValue,
+    error,
+    required,
+    mode = "floating",
+    labelPosition = "center",
+    isIcon = false,
+    labelSize = "sm",
+    fullWidh = false,
+  } = props;
   if (mode === "placeholder") {
     return (
       <div className="relative">

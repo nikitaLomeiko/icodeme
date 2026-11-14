@@ -4,10 +4,13 @@ import { AuthForm } from "@/features/auth";
 import { useRouter } from "next/navigation";
 import { useLazyGetProfileQuery } from "@/entities/profile";
 import { isApiError } from "@/shared/api";
-export const AuthPage = () => {
+export const AuthPage: React.FC = () => {
   const router = useRouter();
+
   const [getProfile] = useLazyGetProfileQuery();
+
   const [failed, setFailed] = useState(false);
+
   const finish = async () => {
     const result = await getProfile(null, false);
     if (result.data?.success) router.replace("/profile");
@@ -19,6 +22,7 @@ export const AuthPage = () => {
       router.replace("/auth/profile");
     else setFailed(true);
   };
+
   return (
     <>
       {failed && (

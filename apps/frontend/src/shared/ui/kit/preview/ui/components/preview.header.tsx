@@ -1,5 +1,5 @@
 import { FiLock, FiRefreshCw, FiX } from "react-icons/fi";
-import { PREVIEW_DEVICES } from "../../consts";
+import { previewDevices } from "../../consts";
 import { PreviewDevice } from "../../types";
 
 interface IProps {
@@ -34,7 +34,7 @@ export const PreviewHeader: React.FC<IProps> = (props) => {
 
       <div className="flex items-center gap-0.5 shrink-0">
         {withDevices &&
-          PREVIEW_DEVICES.map(({ id, title, icon: Icon }) => (
+          previewDevices.map(({ id, title, icon }) => (
             <button
               key={id}
               onClick={() => onDeviceChange(id)}
@@ -45,7 +45,7 @@ export const PreviewHeader: React.FC<IProps> = (props) => {
               }`}
               title={title}
             >
-              <Icon className="w-3.5 h-3.5" />
+              {createElement(icon, { className: "w-3.5 h-3.5" })}
             </button>
           ))}
 
@@ -70,3 +70,4 @@ export const PreviewHeader: React.FC<IProps> = (props) => {
     </div>
   );
 };
+import { createElement } from "react";

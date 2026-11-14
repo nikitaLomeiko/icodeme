@@ -4,19 +4,22 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   ThemeEnum,
   ThemeSwitcherProps,
-  THEME_METADATA,
-} from "../types/theme.typs";
+  themeMetadata,
+} from "../types/theme.types";
 import { Button } from "../../buttons/button";
 import { FaPalette, FaCheck } from "react-icons/fa";
-import { getAvailableThemes } from "../lib/utils/getAvailableThemes";
+import { getAvailableThemes } from "../lib/utils/get-available-themes";
 import { useTheme } from "../lib";
 
-export const ThemeSelector: React.FC<ThemeSwitcherProps> = ({
-  limit,
-  availableThemes: customThemes,
-  showLabel = false,
-  className,
-}) => {
+interface IProps extends ThemeSwitcherProps {}
+
+export const ThemeSelector: React.FC<IProps> = (props) => {
+  const {
+    limit,
+    availableThemes: customThemes,
+    showLabel = false,
+    className,
+  } = props;
   const { theme, setTheme, availableThemes } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -24,7 +27,7 @@ export const ThemeSelector: React.FC<ThemeSwitcherProps> = ({
   const effectiveThemes =
     customThemes || getAvailableThemes(limit, availableThemes);
 
-  const currentThemeMeta = THEME_METADATA[theme];
+  const currentThemeMeta = themeMetadata[theme];
 
   const handleSelectTheme = (newTheme: ThemeEnum) => {
     setTheme(newTheme);
@@ -88,7 +91,7 @@ export const ThemeSelector: React.FC<ThemeSwitcherProps> = ({
             }}
           >
             {effectiveThemes.map((themeOption) => {
-              const meta = THEME_METADATA[themeOption];
+              const meta = themeMetadata[themeOption];
               const isActive = theme === themeOption;
 
               return (

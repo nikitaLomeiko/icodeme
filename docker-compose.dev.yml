@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      target: development
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    command: npm run start:dev
+    volumes:
+      - ./apps/backend:/app
+      - backend-node-modules:/app/node_modules
+      - backend-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  frontend:
+    build:
+      target: development
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3000/}
+      NEXT_PUBLIC_TELEGRAM_BOT_ID: ${NEXT_PUBLIC_TELEGRAM_BOT_ID:-}
+      NEXT_PUBLIC_TELEGRAM_ORIGIN: ${NEXT_PUBLIC_TELEGRAM_ORIGIN:-http://127.0.0.1:5173}
+      WATCHPACK_POLLING: "true"
+    command: npm run dev -- --hostname 0.0.0.0 --port 5173
+    volumes:
+      - ./apps/frontend:/app
+      - frontend-node-modules:/app/node_modules
+      - frontend-next-cache:/app/.next
+
+volumes:
+  backend-node-modules:
+  frontend-node-modules:
+  frontend-next-cache:

@@ -9,17 +9,20 @@ import {
   alignStyles,
 } from "./styles/title.styles";
 
-export const Title: React.FC<TitleProps> = ({
-  children,
-  size = "base",
-  weight = "bold",
-  color = "default",
-  as = "h1",
-  className = "",
-  align = "left",
-  lineClamp,
-  isError,
-}) => {
+interface IProps extends TitleProps {}
+
+export const Title: React.FC<IProps> = (props) => {
+  const {
+    children,
+    size = "base",
+    weight = "bold",
+    color = "default",
+    as = "h1",
+    className = "",
+    align = "left",
+    lineClamp,
+    isError,
+  } = props;
   const Component = as;
 
   const lineClampStyles = lineClamp

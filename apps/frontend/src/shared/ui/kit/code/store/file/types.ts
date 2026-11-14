@@ -7,7 +7,7 @@ export interface FileNode {
 }
 
 export type FileAction =
-  | { type: "CREATE_FILE"; parentId: string; name: string }
+  | { type: "CREATE_FILE"; parentId: string; name: string; id?: string }
   | { type: "CREATE_FOLDER"; parentId: string; name: string }
   | { type: "DELETE"; id: string }
   | { type: "RENAME"; id: string; name: string }

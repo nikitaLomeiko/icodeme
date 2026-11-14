@@ -1,0 +1,17 @@
+export {
+  finishQuiz,
+  goNextQuestion,
+  goPrevQuestion,
+  goToQuestion,
+  loadQuiz,
+  markSkipped,
+  resetQuiz,
+  restartQuiz,
+  selectOption,
+  setFieldAnswer,
+  setQuiz,
+  setTextAnswer,
+  setTimeLeft,
+  skipQuestion,
+  startQuiz,
+} from "./quiz.slice";

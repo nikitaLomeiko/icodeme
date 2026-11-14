@@ -16,11 +16,7 @@
     "baseUrl": "./",
     "paths": {
       "@modules/*": ["src/modules/*"],
-      "@core/*": ["src/core/*"],
-      "@api/*": ["src/api/*"],
-      "@services/*": ["src/services/*"],
-      "@models/*": ["src/models/*"],
-      "@data/*": ["src/data/*"]
+      "@core/*": ["src/core/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

@@ -7,13 +7,11 @@ const { JwtService } = require('@nestjs/jwt');
 const {
   TokenHelper,
   hashToken,
-} = require('../src/services/authService/helpers/Token.helper');
-const { JwtHelper } = require('../src/services/authService/helpers/Jwt.helper');
-const { OauthService } = require('../src/services/authService/OAuth.service');
-const { AuthService } = require('../src/services/authService/Auth.service');
-const {
-  JwtStrategy,
-} = require('../src/services/authService/strategy/Jwt.strategy');
+} = require('../src/modules/auth/helpers/token.helper');
+const { JwtHelper } = require('../src/modules/auth/helpers/jwt.helper');
+const { OAuthService } = require('../src/modules/auth/services/oauth.service');
+const { AuthService } = require('../src/modules/auth/services/auth.service');
+const { JwtStrategy } = require('../src/modules/auth/strategies/jwt.strategy');
 const {
   AuthController,
 } = require('../src/modules/auth/controllers/auth.controller');
@@ -22,15 +20,13 @@ const {
 } = require('../src/modules/auth/controllers/oauth.controller');
 const {
   GoogleStateGuard,
-} = require('../src/services/authService/strategy/OAuth-state.guard');
+} = require('../src/modules/auth/strategies/oauth-state.guard');
 const {
   textField,
   requireOrigin,
   setSession,
-} = require('../src/services/authService/helpers/Auth.http');
-const {
-  DockerService,
-} = require('../src/services/dockerService/Docker.service');
+} = require('../src/modules/auth/helpers/auth.http');
+const { DockerService } = require('../src/modules/ide/services/docker.service');
 const bcrypt = require('bcrypt');
 const config = require('../src/core/config/jwt/jwt.config').default;
 const user = {
@@ -191,7 +187,7 @@ function telegram(fields = {}) {
   };
 }
 test('Telegram accepts authentic signed data including auth_date; rejects tampering and invalid dates', () => {
-  const service = Object.create(OauthService.prototype);
+  const service = Object.create(OAuthService.prototype);
   const valid = telegram();
   assert.equal(service.verifyTelegramAuthData(valid), true);
   for (const invalid of [
@@ -205,7 +201,7 @@ test('Telegram accepts authentic signed data including auth_date; rejects tamper
 });
 test('actual Telegram endpoint rejects unsigned and malformed payloads before issuing tokens', async () => {
   let calls = 0;
-  const service = Object.create(OauthService.prototype);
+  const service = Object.create(OAuthService.prototype);
   service.validateOrCreateTelegramUser = async () => {
     calls++;
   };
@@ -289,18 +285,14 @@ test('confirmation enforces purpose, expiry and atomic attempt budget; consumes 
     },
   };
   assert.equal(
-    (await service.confirmCode('wrong', 'user', { isResetPassword: true }))
-      .success,
+    (await service.confirmCode('wrong', 'user', 'reset')).success,
     false,
   );
-  const result = await service.confirmCode('12345', 'user', {
-    isResetPassword: true,
-  });
+  const result = await service.confirmCode('12345', 'user', 'reset');
   assert.equal(result.success, true);
   assert.equal(grant.resetTokenHash, hashToken(result.data.resetToken));
   assert.equal(
-    (await service.confirmCode('12345', 'user', { isResetPassword: true }))
-      .success,
+    (await service.confirmCode('12345', 'user', 'reset')).success,
     false,
   );
 });
@@ -437,7 +429,7 @@ test('login waits for storage and controller returns no access/refresh secrets',
   const controller = new AuthController(service);
   const cookies = [];
   const work = controller.login(
-    { body: { email: user.email, password: 'password' } },
+    { email: user.email, password: 'password' },
     { setHeader() {}, cookie: (...args) => cookies.push(args) },
   );
   await new Promise(setImmediate);
@@ -454,7 +446,7 @@ test('login waits for storage and controller returns no access/refresh secrets',
 test('shared rate limiter rejects repeated attempts by account as well as address', async () => {
   const {
     AuthSecurityGuard,
-  } = require('../src/services/authService/strategy/Auth-security.guard');
+  } = require('../src/modules/auth/strategies/auth-security.guard');
   const counts = new Map();
   const guard = new AuthSecurityGuard({
     collection: () => ({

@@ -2,17 +2,13 @@ import { Avatar, Title } from "@/shared/ui/kit";
 import { illustratedAvatars } from "../../model/data/avatar.data";
 import { AvatarList } from "../components/avatar.list";
 
-interface AvatarStepProps {
+interface IProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
 }
 
-export const AvatarStep: React.FC<AvatarStepProps> = ({
-  value,
-  onChange,
-  error,
-}) => {
+export const AvatarStep: React.FC<IProps> = ({ value, onChange, error }) => {
   const handleSelect = (avatarLabel: string) => {
     onChange(avatarLabel);
   };

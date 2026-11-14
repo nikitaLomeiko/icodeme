@@ -1,5 +1,5 @@
-export { CodeEnviroment } from "./code.enviroment";
-export * from "./code.enviroment";
+export { CodeEnvironment } from "./code.environment";
+export * from "./code.environment";
 export * from "./store/file";
-export * from "./store/enviroment";
+export * from "./store/environment";
 export * from "./types/types";

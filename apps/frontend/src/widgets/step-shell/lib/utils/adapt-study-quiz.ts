@@ -1,5 +1,8 @@
-import type { IQuestion as StudyQuestion, IQuiz as StudyQuiz } from "@/entities/study";
-import type { IQuestion, ITest } from "@/shared/ui/kit/quiz";
+import type {
+  IQuestion as StudyQuestion,
+  IQuiz as StudyQuiz,
+} from "@/entities/study";
+import type { IQuestion, ITest } from "@/features/quiz";
 
 function adaptQuestion(question: StudyQuestion, index: number): IQuestion {
   const base = {
@@ -19,7 +22,9 @@ function adaptQuestion(question: StudyQuestion, index: number): IQuestion {
           id: String(optionIndex),
           label: variant.content,
         })),
-        correct: variants.flatMap((variant, optionIndex) => variant.isTrue ? [String(optionIndex)] : []),
+        correct: variants.flatMap((variant, optionIndex) =>
+          variant.isTrue ? [String(optionIndex)] : [],
+        ),
         multiple: variants.filter((variant) => variant.isTrue).length > 1,
       };
     }
@@ -27,21 +32,41 @@ function adaptQuestion(question: StudyQuestion, index: number): IQuestion {
       return {
         ...base,
         type: "choice",
-        options: [{ id: "true", label: "Верно" }, { id: "false", label: "Неверно" }],
+        options: [
+          { id: "true", label: "Верно" },
+          { id: "false", label: "Неверно" },
+        ],
         correct: question.truefolse ? [String(question.truefolse.correct)] : [],
       };
     case "input": {
       const inputs = question.inputs ?? [];
       return inputs.length === 1
-        ? { ...base, type: "text", correct: inputs[0].correct, answerLabel: inputs[0].label, answerPlaceholder: inputs[0].input }
-        : { ...base, type: "fields", fields: inputs.map((input) => ({ label: input.label, placeholder: input.input, correct: input.correct })) };
+        ? {
+            ...base,
+            type: "text",
+            correct: inputs[0].correct,
+            answerLabel: inputs[0].label,
+            answerPlaceholder: inputs[0].input,
+          }
+        : {
+            ...base,
+            type: "fields",
+            fields: inputs.map((input) => ({
+              label: input.label,
+              placeholder: input.input,
+              correct: input.correct,
+            })),
+          };
     }
     case "code":
       return {
         ...base,
         type: "text",
         codeSnippet: question.code?.code,
-        correct: [...(question.code?.correctCode ?? []), ...(question.code?.correctResult ?? [])],
+        correct: [
+          ...(question.code?.correctCode ?? []),
+          ...(question.code?.correctResult ?? []),
+        ],
         answerPlaceholder: "Напишите код или результат выполнения",
       };
   }

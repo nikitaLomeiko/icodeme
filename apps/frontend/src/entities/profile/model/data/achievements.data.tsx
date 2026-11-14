@@ -20,7 +20,7 @@ import {
 } from "react-icons/fi";
 import { IAchievementUI } from "../types";
 
-export const AchievementsData: IAchievementUI[] = [
+export const achievementsData: IAchievementUI[] = [
   {
     id: "1",
     title: "Начало пути",

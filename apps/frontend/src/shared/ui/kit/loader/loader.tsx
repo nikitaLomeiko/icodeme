@@ -1,16 +1,14 @@
-import type { ComponentPropsWithoutRef, ForwardedRef } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
 import { sizeMap } from "./styles/loader.style";
 
-export interface LoaderProps extends ComponentPropsWithoutRef<"div"> {
+interface IProps extends ComponentPropsWithoutRef<"div"> {
   size?: "sm" | "md" | "lg";
   color?: string;
 }
 
-const LoaderComponent = (
-  { size = "md", color, className = "", style, ...rest }: LoaderProps,
-  ref: ForwardedRef<HTMLDivElement>,
-) => {
+export const Loader = forwardRef<HTMLDivElement, IProps>((props, ref) => {
+  const { size = "md", color, className = "", style, ...rest } = props;
   const sizeClasses = sizeMap[size];
   const borderColor = color ?? "var(--ui-primary)";
 
@@ -29,6 +27,6 @@ const LoaderComponent = (
       <span className="sr-only">Loading...</span>
     </div>
   );
-};
+});
 
-export const Loader = forwardRef(LoaderComponent);
+Loader.displayName = "Loader";

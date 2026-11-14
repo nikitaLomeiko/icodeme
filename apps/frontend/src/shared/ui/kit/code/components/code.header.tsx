@@ -10,23 +10,28 @@ import {
   FiPlay,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-import { useExplorer } from "../store/file/use.explorer";
+import {
+  useFileMetadata,
+  useGetActiveFile,
+  useGetFileTree,
+  useHasActiveFile,
+} from "../store/file/use.explorer";
 import { useEffect } from "react";
-import { useEnviroment } from "../store/enviroment";
-import { isHtmlFile } from "../libs/utils/build-document";
+import { useEnvironment } from "../store/environment";
 import { FileNode } from "../types/types";
 
 interface IProps {
-  onRun: (Files: FileNode[]) => void;
+  onRun: (files: FileNode[]) => void;
 }
 
 export const CodeHeader: React.FC<IProps> = ({ onRun }) => {
-  const { activeFile, allFiles } = useExplorer();
+  const hasActiveFile = useHasActiveFile();
+  const getActiveFile = useGetActiveFile();
+  const getFileTree = useGetFileTree();
+  const { hasHtmlFile } = useFileMetadata();
 
   const { copied, fontSize, sidebarOpen, previewOpen, dispatch } =
-    useEnviroment();
-
-  const hasHtmlFile = allFiles.some(isHtmlFile);
+    useEnvironment();
 
   const router = useRouter();
 
@@ -96,11 +101,11 @@ export const CodeHeader: React.FC<IProps> = ({ onRun }) => {
           </button>
         </div>
 
-        {activeFile && (
+        {hasActiveFile && (
           <div className="relative">
             <button
               onClick={() => {
-                navigator.clipboard.writeText(activeFile.content);
+                navigator.clipboard.writeText(getActiveFile()?.content || "");
                 dispatch?.({ type: "TOGGLE_COPIED" });
               }}
               className="rounded-lg p-1.5 hover:bg-[var(--ui-text)]/5 text-[var(--ui-text-muted)] hover:text-[var(--ui-primary)] transition-all"
@@ -116,7 +121,7 @@ export const CodeHeader: React.FC<IProps> = ({ onRun }) => {
           </div>
         )}
 
-        {activeFile && (
+        {hasActiveFile && (
           <button
             onClick={() => dispatch?.({ type: "TOGGLE_SEARCH" })}
             className="rounded-lg p-1.5 hover:bg-[var(--ui-text)]/5 text-[var(--ui-text-muted)] hover:text-[var(--ui-primary)] transition-all"
@@ -126,9 +131,9 @@ export const CodeHeader: React.FC<IProps> = ({ onRun }) => {
           </button>
         )}
 
-        {activeFile && (
+        {hasActiveFile && (
           <button
-            onClick={() => onRun(allFiles)}
+            onClick={() => onRun(getFileTree())}
             className="rounded-lg p-1.5 hover:bg-[var(--ui-text)]/5 text-[var(--ui-text-muted)] hover:text-[var(--ui-primary)] transition-all"
             title="Run code"
           >

@@ -8,7 +8,6 @@ interface IProps {
 export const StepLine: React.FC<IProps> = ({ steps }) => {
   const containerRef = useRef<SVGSVGElement | null>(null);
   const [width, setWidth] = useState(0);
-  const [lineColor, setLineColor] = useState("rgba(100,116,139,0.35)");
 
   useEffect(() => {
     const el = containerRef.current;
@@ -25,14 +24,6 @@ export const StepLine: React.FC<IProps> = ({ steps }) => {
     ro.observe(parent);
     if (typeof window !== "undefined") {
       window.addEventListener("resize", update);
-    }
-
-    if (typeof document !== "undefined") {
-      const isDark =
-        document.documentElement.getAttribute("data-theme") === "dark";
-      setLineColor(
-        isDark ? "rgba(148,163,184,0.35)" : "rgba(100,116,139,0.35)",
-      );
     }
 
     return () => {
@@ -75,9 +66,13 @@ export const StepLine: React.FC<IProps> = ({ steps }) => {
     >
       <defs>
         <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={lineColor} />
-          <stop offset="50%" stopColor={lineColor} stopOpacity="0.45" />
-          <stop offset="100%" stopColor={lineColor} />
+          <stop offset="0%" stopColor="var(--study-line-color)" />
+          <stop
+            offset="50%"
+            stopColor="var(--study-line-color)"
+            stopOpacity="0.45"
+          />
+          <stop offset="100%" stopColor="var(--study-line-color)" />
         </linearGradient>
       </defs>
       <path
@@ -97,7 +92,7 @@ export const StepLine: React.FC<IProps> = ({ steps }) => {
               cx={point.x}
               cy={point.y}
               r="4"
-              fill={lineColor}
+              fill="var(--study-line-color)"
               opacity="0.5"
             />
           ),

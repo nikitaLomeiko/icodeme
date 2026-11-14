@@ -1,11 +1,17 @@
 import { ReactNode } from "react";
 import { ModalVariant } from "../types";
 
-export const ModalFooter: React.FC<{
+interface IProps {
   children: ReactNode;
   className?: string;
   variant?: ModalVariant;
-}> = ({ children, className, variant }) => {
+}
+
+export const ModalFooter: React.FC<IProps> = ({
+  children,
+  className,
+  variant,
+}) => {
   const isTransparent = variant === "transparent";
   const isNone = variant === "none";
   const showFooterBorder = !isTransparent && !isNone;

@@ -14,7 +14,9 @@ import { useInternal } from "./hooks/use.internal";
 import { useFocused } from "./hooks/use.focused";
 import { FieldIcon } from "./ui/field.icon";
 
-export const TextareaField = forwardRef<HTMLTextAreaElement, BaseTextareaProps>(
+interface IProps extends BaseTextareaProps {}
+
+export const TextareaField = forwardRef<HTMLTextAreaElement, IProps>(
   (props, forwardedRef) => {
     const {
       id,

@@ -1,31 +1,40 @@
-import type { RootState } from "@/app/providers/redux-store";
+import type { IStudyState } from "../types";
 
-export const selectStudyPlans = (state: RootState) => state.study.plans;
-export const selectStudyView = (state: RootState) => state.study.view;
+interface StudyStoreState {
+  study: IStudyState;
+}
 
-export const selectCurrentPlan = (state: RootState) => state.study.currentPlan;
-export const selectCurrentPlanIndex = (state: RootState) =>
+export const selectStudyPlans = (state: StudyStoreState) => state.study.plans;
+export const selectStudyView = (state: StudyStoreState) => state.study.view;
+
+export const selectCurrentPlan = (state: StudyStoreState) =>
+  state.study.currentPlan;
+export const selectCurrentPlanIndex = (state: StudyStoreState) =>
   state.study.currentPlanIndex;
 
-export const selectViewedModule = (state: RootState) => state.study.viewedModule;
-export const selectViewedModuleIndex = (state: RootState) =>
+export const selectViewedModule = (state: StudyStoreState) =>
+  state.study.viewedModule;
+export const selectViewedModuleIndex = (state: StudyStoreState) =>
   state.study.viewedModuleIndex;
 
-export const selectCurrentModule = (state: RootState) =>
+export const selectCurrentModule = (state: StudyStoreState) =>
   state.study.currentModule;
-export const selectCurrentModuleIndex = (state: RootState) =>
+export const selectCurrentModuleIndex = (state: StudyStoreState) =>
   state.study.currentModuleIndex;
 
-export const selectCurrentLevel = (state: RootState) => state.study.currentLevel;
-export const selectCurrentLevelIndex = (state: RootState) =>
+export const selectCurrentLevel = (state: StudyStoreState) =>
+  state.study.currentLevel;
+export const selectCurrentLevelIndex = (state: StudyStoreState) =>
   state.study.currentLevelIndex;
 
-export const selectCurrentStep = (state: RootState) => state.study.currentStep;
-export const selectCurrentStepIndex = (state: RootState) =>
+export const selectCurrentStep = (state: StudyStoreState) =>
+  state.study.currentStep;
+export const selectCurrentStepIndex = (state: StudyStoreState) =>
   state.study.currentStepIndex;
 
-export const selectSelectedStep = (state: RootState) => state.study.selectedStep;
-export const selectSelectedLevelIndex = (state: RootState) =>
+export const selectSelectedStep = (state: StudyStoreState) =>
+  state.study.selectedStep;
+export const selectSelectedLevelIndex = (state: StudyStoreState) =>
   state.study.selectedLevelIndex;
-export const selectSelectedStepIndex = (state: RootState) =>
+export const selectSelectedStepIndex = (state: StudyStoreState) =>
   state.study.selectedStepIndex;

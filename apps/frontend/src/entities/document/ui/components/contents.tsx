@@ -1,20 +1,20 @@
-import { documentOptionStore } from "@/entities/document/model";
+import { documentOptionStore } from "../../model";
 import { Heading } from "../../model/types/document.types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { Button } from "@/shared/ui/kit";
 
-interface ContentsProps {
+interface IProps {
   isMobile?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
 }
 
-export const Contents = ({
+export const Contents: React.FC<IProps> = ({
   isMobile = false,
   isOpen = true,
   onClose,
-}: ContentsProps) => {
+}) => {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const headingsRef = useRef<Heading[]>([]);
   const [activeId, setActiveId] = useState<string>("");

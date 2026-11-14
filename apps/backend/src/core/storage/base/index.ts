@@ -1,1 +1,1 @@
-export { BaseFileStorage } from './BaseFileStorage';
+export { BaseFileStorage } from './base-file-storage';

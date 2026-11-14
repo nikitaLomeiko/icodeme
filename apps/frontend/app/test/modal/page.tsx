@@ -12,7 +12,7 @@ import {
   ModalContent,
   ModalOverlay,
   ModalContainer,
-} from "@/shared/ui/kit/modal";
+} from "@/shared/ui/kit";
 import { Button, Title } from "@/shared/ui/kit";
 
 type VariantType = "dark" | "blur" | "transparent" | "none";
@@ -28,7 +28,7 @@ type PositionType =
   | "left"
   | "right";
 
-export default function ModalDemoPage() {
+const ModalDemoPage: React.FC = () => {
   // State for different modals
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<VariantType>("dark");
@@ -939,4 +939,6 @@ export default function ModalDemoPage() {
       </div>
     </div>
   );
-}
+};
+
+export default ModalDemoPage;

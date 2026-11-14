@@ -6,21 +6,24 @@ import { BaseButtonProps } from "./types/button.props";
 import { baseStyles, sizeStyles, variantStyles } from "./styles/button.styles";
 import { Loader } from "../loader";
 
-export const Button: React.FC<BaseButtonProps> = ({
-  variant = "primary",
-  size = "md",
-  isLoading = false,
-  fullWidth = false,
-  icon: Icon,
-  iconPosition = "left",
-  children,
-  className = "",
-  onClick,
-  type = "button",
-  sizeIcon,
-  disabled,
-  disableHoverScale = false,
-}) => {
+interface IProps extends BaseButtonProps {}
+
+export const Button: React.FC<IProps> = (props) => {
+  const {
+    variant = "primary",
+    size = "md",
+    isLoading = false,
+    fullWidth = false,
+    icon: Icon,
+    iconPosition = "left",
+    children,
+    className = "",
+    onClick,
+    type = "button",
+    sizeIcon,
+    disabled,
+    disableHoverScale = false,
+  } = props;
   const widthStyle = fullWidth ? "w-full" : "";
 
   const buttonStyles = `

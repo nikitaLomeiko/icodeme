@@ -7,22 +7,17 @@ import { EditorArea } from "./ui/editor.area";
 import { MatchCount } from "../libs/utils/match-count";
 import { EditorHeader } from "./ui/editor.header";
 import { EditorSearch } from "./ui/editor.search";
-import { useExplorer } from "../store/file/use.explorer";
-import { useEnviroment } from "../store/enviroment";
-import { FileNode } from "../types/types";
-
-interface IProps {
-  initialFile?: FileNode;
-  onChangeContent?: (content: string) => void;
-}
-
-export const CodeEditor: React.FC<IProps> = (props) => {
-  const { onChangeContent, initialFile } = props;
-
-  const { activeFile, activeFileId, dispatch } = useExplorer({
-    initialFileSystem: initialFile,
-  });
-  const { showSearch, fontSize, dispatch: dispatchEnv } = useEnviroment();
+import {
+  useActiveFile,
+  useFileDispatch,
+  useFileSelection,
+} from "../store/file/use.explorer";
+import { useEnvironment } from "../store/environment";
+export const CodeEditor: React.FC = () => {
+  const { activeFileId } = useFileSelection();
+  const activeFile = useActiveFile();
+  const dispatch = useFileDispatch();
+  const { showSearch, fontSize, dispatch: dispatchEnv } = useEnvironment();
 
   const value = activeFile?.content || "";
 
@@ -62,10 +57,9 @@ export const CodeEditor: React.FC<IProps> = (props) => {
     (content: string) => {
       if (activeFileId) {
         dispatch?.({ type: "UPDATE_CONTENT", id: activeFileId, content });
-        onChangeContent?.(content);
       }
     },
-    [activeFileId],
+    [activeFileId, dispatch],
   );
 
   useEffect(() => {

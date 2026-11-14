@@ -1,10 +1,10 @@
 "use client";
 
 import { Button, useNotification } from "@/shared/ui/kit";
-import { NotificationPosition } from "@/shared/ui/kit/notification/types/notification.types";
+import type { NotificationPosition } from "@/shared/ui/kit";
 import { useState } from "react";
 
-export default function NotificationDemo() {
+const NotificationDemoPage: React.FC = () => {
   const notification = useNotification();
   const [position, setPosition] = useState<NotificationPosition>("top-right");
   const [duration, setDuration] = useState(3000);
@@ -167,4 +167,6 @@ export default function NotificationDemo() {
       </div>
     </div>
   );
-}
+};
+
+export default NotificationDemoPage;

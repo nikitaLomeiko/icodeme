@@ -1,37 +1,41 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { setSession } from '@services/authService/helpers/Auth.http';
+import { setSession } from '../helpers/auth.http';
 import {
   GoogleStateGuard,
   GitHubStateGuard,
-} from '@services/authService/strategy/OAuth-state.guard';
+} from '../strategies/oauth-state.guard';
 import {
   Controller,
   Get,
   Post,
-  Request,
+  Req,
   UseGuards,
   Res,
   Body,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { OauthService } from '@services/authService';
+import { OAuthService } from '../services/oauth.service';
 import config from '@core/config/google/google.config';
 import githubConfig from '@core/config/github/github.config';
-import telegramConfig from '@core/config/telegram/telegram.config';
+import type { GitHubOAuthUser, GoogleOAuthUser, OAuthRequest } from '../types';
+import { TelegramAuthDto } from '../dto';
+import { parseTelegramAuthData } from '../helpers/parse-telegram-auth-data';
 
 import type * as express from 'express';
 
 @Controller('oauth')
 export class OAuthController {
-  constructor(private readonly oauthService: OauthService) {}
+  constructor(private readonly oauthService: OAuthService) {}
 
   @Get('google')
   @UseGuards(GoogleStateGuard)
-  async googleAuth() {}
+  googleAuth(): void {}
 
   @Get('google/callback')
   @UseGuards(GoogleStateGuard)
-  async googleAuthRedirect(@Request() req, @Res() res: express.Response) {
+  async googleAuthRedirect(
+    @Req() req: OAuthRequest<GoogleOAuthUser>,
+    @Res() res: express.Response,
+  ) {
     const googleUser = req.user;
 
     const result = await this.oauthService.validateOrCreateGoogleUser(
@@ -43,21 +47,24 @@ export class OAuthController {
 
     const frontendUrl = config().frontendURL;
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       return res.redirect(`${frontendUrl}/oauth/error?error=user_exists`);
     }
 
-    setSession(res, result.data!);
+    setSession(res, result.data);
     return res.redirect(`${frontendUrl}/oauth/success`);
   }
 
   @Get('github')
   @UseGuards(GitHubStateGuard)
-  async githubAuth() {}
+  githubAuth(): void {}
 
   @Get('github/callback')
   @UseGuards(GitHubStateGuard)
-  async githubAuthRedirect(@Request() req, @Res() res: express.Response) {
+  async githubAuthRedirect(
+    @Req() req: OAuthRequest<GitHubOAuthUser>,
+    @Res() res: express.Response,
+  ) {
     const githubUser = req.user;
 
     const result = await this.oauthService.validateOrCreateGitHubUser(
@@ -70,31 +77,30 @@ export class OAuthController {
 
     const frontendUrl = githubConfig().frontendURL;
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       return res.redirect(`${frontendUrl}/oauth/error?error=user_exists`);
     }
 
-    setSession(res, result.data!);
+    setSession(res, result.data);
     return res.redirect(`${frontendUrl}/oauth/success`);
   }
 
   @Post('telegram/verify')
-  async telegramVerify(@Body() body: any, @Res() res: express.Response) {
-    let data = body;
-    if (body?.tgAuthResult !== undefined) {
-      if (
-        typeof body.tgAuthResult !== 'string' ||
-        body.tgAuthResult.length > 8192
-      )
-        throw new BadRequestException();
+  async telegramVerify(
+    @Body() body: TelegramAuthDto,
+    @Res() res: express.Response,
+  ) {
+    let source: unknown = body;
+    if (body.tgAuthResult !== undefined) {
       try {
-        data = JSON.parse(
+        source = JSON.parse(
           Buffer.from(body.tgAuthResult, 'base64').toString('utf8'),
-        );
+        ) as unknown;
       } catch {
         throw new BadRequestException('Invalid Telegram payload');
       }
     }
+    const data = parseTelegramAuthData(source);
     if (!this.oauthService.verifyTelegramAuthData(data))
       throw new UnauthorizedException('Invalid Telegram signature');
     const result = await this.oauthService.validateOrCreateTelegramUser(
@@ -111,7 +117,10 @@ export class OAuthController {
   }
 
   @Post('telegram')
-  async telegramAuthPost(@Body() body: any, @Res() res: express.Response) {
+  async telegramAuthPost(
+    @Body() body: TelegramAuthDto,
+    @Res() res: express.Response,
+  ) {
     return this.telegramVerify(body, res);
   }
 }

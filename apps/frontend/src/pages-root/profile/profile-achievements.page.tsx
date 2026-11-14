@@ -1,7 +1,7 @@
-import { AchievementsData, useGetProfileQuery } from "@/entities/profile";
+import { achievementsData, useGetProfileQuery } from "@/entities/profile";
 import { AchievementList } from "@/widgets/achievement-view";
 
-export const ProfileAchievementsPage = () => {
+export const ProfileAchievementsPage: React.FC = () => {
   const { data: profile } = useGetProfileQuery(null);
 
   if (!profile?.data) {
@@ -10,7 +10,7 @@ export const ProfileAchievementsPage = () => {
 
   return (
     <AchievementList
-      achievements={AchievementsData.map((item) => ({
+      achievements={achievementsData.map((item) => ({
         ...item,
         isLocked: !profile.data?.achievements?.some(
           (ach) => ach.id === item.id,

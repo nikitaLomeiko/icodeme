@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { PageLoading } from "@/widgets/layout/ui/page-loading";
+import { PageLoading } from "@/shared/ui/kit";
 import { BackButton } from "@/shared/ui/back-button";
 import { StepAssignment } from "./components/step-assignment";
 import { StepRuntimeInfo } from "./components/step-runtime-info";
@@ -18,15 +18,8 @@ interface IProps {
 }
 
 export const StepShell: React.FC<IProps> = (props) => {
-  const {
-    children,
-    message,
-    loading,
-    content,
-    description,
-    title,
-    settings,
-  } = props;
+  const { children, message, loading, content, description, title, settings } =
+    props;
 
   return (
     <div className="w-full px-4 pb-12 pt-3 sm:px-6">

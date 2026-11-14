@@ -1,9 +1,11 @@
 import { paddingStyles } from "../styles";
 import { CardPadding } from "../types";
 
-export const CardSkeleton: React.FC<{ padding: CardPadding }> = ({
-  padding,
-}) => (
+interface IProps {
+  padding: CardPadding;
+}
+
+export const CardSkeleton: React.FC<IProps> = ({ padding }) => (
   <div className={`${paddingStyles[padding]} space-y-4 animate-pulse`}>
     <div className="h-4 bg-[var(--ui-border)] rounded w-1/4"></div>
     <div className="space-y-2">

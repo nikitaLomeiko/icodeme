@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export const SphereGradient = () => {
+export const SphereGradient: React.FC = () => {
   return (
     <>
       <motion.div

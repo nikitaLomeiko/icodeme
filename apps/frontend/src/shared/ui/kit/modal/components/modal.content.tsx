@@ -2,14 +2,19 @@ import { ReactNode } from "react";
 import { contentVariantStyles, sizeStyles } from "../styles";
 import { ModalSize, ModalVariant } from "../types";
 
-export const ModalContent: React.FC<{
+interface IProps {
   size: ModalSize;
   variant: ModalVariant;
   children: ReactNode;
   className?: string;
-}> = ({ size, variant, children, className }) => (
-  <div
-    className={`
+}
+
+export const ModalContent: React.FC<IProps> = (props) => {
+  const { size, variant, children, className } = props;
+
+  return (
+    <div
+      className={`
       relative
       mx-auto my-0
       w-full ${sizeStyles[size]}
@@ -18,7 +23,8 @@ export const ModalContent: React.FC<{
       ${contentVariantStyles[variant]}
       ${className || ""}
     `}
-  >
-    {children}
-  </div>
-);
+    >
+      {children}
+    </div>
+  );
+};

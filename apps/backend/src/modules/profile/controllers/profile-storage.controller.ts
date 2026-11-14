@@ -4,29 +4,32 @@ import {
   Post,
   Delete,
   Body,
-  Request,
   UseGuards,
   NotFoundException,
   BadRequestException,
   Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ProfileService, ProfileError } from '@services/profileService';
-import { IControllerResponse } from '@core/types/Response.type';
-import { IFavorite, ILineFavorite } from '@models/profile-storage';
+import { ProfileError } from '../types';
+import { IControllerResponse } from '@core/types/response.type';
+import { IFavorite } from '../models/profile-storage.model';
+import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '@modules/auth/types';
+import { CreateFavoriteDto, DeleteFavoriteDto } from '../dto';
+import { ProfileStorageService } from '../services/profile-storage.service';
 
 @Controller('profiles/me/storage')
 @UseGuards(AuthGuard('jwt'))
 export class ProfileStorageController {
-  constructor(private readonly profileService: ProfileService) {}
+  constructor(private readonly profileStorageService: ProfileStorageService) {}
 
   @Get('document/favorite')
   async getDocumentFavorites(
-    @Request() req,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('documentId') documentId: string,
   ): Promise<IControllerResponse<IFavorite>> {
-    const result = await this.profileService.getDocumentFavoritesById(
-      req.user.userId,
+    const result = await this.profileStorageService.getDocumentFavorites(
+      user.userId,
       documentId,
     );
 
@@ -38,12 +41,12 @@ export class ProfileStorageController {
   }
 
   @Post('document/favorite')
-  async createNewProfile(
-    @Request() req,
-    @Body() data: { documentId: string; favorite: ILineFavorite },
+  async createFavorite(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: CreateFavoriteDto,
   ): Promise<IControllerResponse<null>> {
-    const result = await this.profileService.createNewDocumentFavorite(
-      req.user.userId,
+    const result = await this.profileStorageService.addDocumentFavorite(
+      user.userId,
       data.documentId,
       data.favorite,
     );
@@ -56,12 +59,12 @@ export class ProfileStorageController {
   }
 
   @Delete('document/favorite')
-  async deleteMyProfile(
-    @Request() req,
-    @Body() data: { documentId: string; favoriteId: string },
+  async deleteFavorite(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: DeleteFavoriteDto,
   ): Promise<IControllerResponse<null>> {
-    const result = await this.profileService.removeDocumentFavoriteById(
-      req.user.userId,
+    const result = await this.profileStorageService.removeDocumentFavorite(
+      user.userId,
       data.documentId,
       data.favoriteId,
     );

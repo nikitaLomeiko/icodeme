@@ -1,39 +1,40 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-interface UseInternalProps {
+type FieldElement = HTMLInputElement | HTMLTextAreaElement;
+
+interface UseInternalProps<TElement extends FieldElement> {
   value?: string | number | readonly string[] | undefined;
-  onChange?: (e: any) => void;
+  onChange?: React.ChangeEventHandler<TElement>;
 }
 
-interface UseInternalReturn {
+interface UseInternalReturn<TElement extends FieldElement> {
   internalValue: string | number | readonly string[];
   hasValue: boolean;
-  handleChange: (e: any, func?: () => void) => void;
+  handleChange: (e: React.ChangeEvent<TElement>, func?: () => void) => void;
   setInternalValue: (value: string | number | readonly string[]) => void;
 }
 
-export const useInternal = ({
+export const useInternal = <TElement extends FieldElement = HTMLInputElement>({
   value,
   onChange,
-}: UseInternalProps): UseInternalReturn => {
-  const [internalValue, setInternalValue] = useState(value || "");
+}: UseInternalProps<TElement>): UseInternalReturn<TElement> => {
+  const [uncontrolledValue, setUncontrolledValue] = useState<
+    string | number | readonly string[]
+  >(value ?? "");
+  const internalValue = value ?? uncontrolledValue;
 
   const hasValue = String(internalValue || "").length > 0;
 
-  useEffect(() => {
-    if (value !== undefined) {
-      setInternalValue(value);
-    }
-  }, [value]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    func?: () => void,
-  ) => {
-    setInternalValue(e.target.value);
+  const handleChange = (e: React.ChangeEvent<TElement>, func?: () => void) => {
+    setUncontrolledValue(e.target.value);
     onChange?.(e);
     func?.();
   };
 
-  return { internalValue, hasValue, handleChange, setInternalValue };
+  return {
+    internalValue,
+    hasValue,
+    handleChange,
+    setInternalValue: setUncontrolledValue,
+  };
 };

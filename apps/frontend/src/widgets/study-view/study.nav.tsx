@@ -3,10 +3,10 @@ import {
   selectStudyPlans,
   setStudyView,
 } from "@/entities/study";
-import { useAppDispatch, useAppSelector } from "@/shared/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/shared/lib";
 import { useRouter } from "next/navigation";
 
-export const StudyNav = () => {
+export const StudyNav: React.FC = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 

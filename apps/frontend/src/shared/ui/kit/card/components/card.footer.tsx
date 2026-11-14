@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
 
-export const CardFooter: React.FC<{
+interface IProps {
   children: ReactNode;
   className?: string;
-}> = ({ children, className }) => {
+}
+
+export const CardFooter: React.FC<IProps> = ({ children, className }) => {
   if (!children) return null;
 
   return (

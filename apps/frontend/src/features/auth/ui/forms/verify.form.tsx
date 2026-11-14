@@ -7,21 +7,17 @@ import { Button, CodeField, useNotification } from "@/shared/ui/kit";
 import { IBaseFormProps } from "../../model/types/form.props";
 import { VerifyFormData, verifySchema } from "../../model/validate/auth.schema";
 import { selectUserId, useConfirmCodeMutation } from "@/entities/auth";
-import { useAppSelector } from "@/shared/lib/hooks";
+import { useAppSelector } from "@/shared/lib";
 import { isApiError } from "@/shared/api";
 
-interface VerifyFormProps extends Omit<IBaseFormProps, "onSuccess"> {
+interface IProps extends Omit<IBaseFormProps, "onSuccess"> {
   onSuccess?: (resetToken?: string) => void | Promise<void>;
   typeConfirm: string;
   isProcessing?: boolean;
 }
 
-export const VerifyForm: React.FC<VerifyFormProps> = ({
-  setError,
-  onSuccess,
-  typeConfirm,
-  isProcessing = false,
-}) => {
+export const VerifyForm: React.FC<IProps> = (props) => {
+  const { setError, onSuccess, typeConfirm, isProcessing = false } = props;
   const {
     setValue,
     watch,

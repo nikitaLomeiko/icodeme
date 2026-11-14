@@ -5,6 +5,18 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+FROM dependencies AS development
+
+ENV NODE_ENV=development \
+    PORT=5173 \
+    HOSTNAME=0.0.0.0
+
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "5173"]
+
 FROM dependencies AS build
 
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:3000/

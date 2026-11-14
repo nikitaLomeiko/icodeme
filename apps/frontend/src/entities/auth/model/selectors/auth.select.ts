@@ -1,4 +1,8 @@
-import { RootState } from "@/app/providers/redux-store";
+import type { IAuthState } from "../types";
 
-export const selectIsAuthenticated = (state: RootState) =>
+interface AuthStoreState {
+  auth: IAuthState;
+}
+
+export const selectIsAuthenticated = (state: AuthStoreState) =>
   state.auth.isAuthenticated;

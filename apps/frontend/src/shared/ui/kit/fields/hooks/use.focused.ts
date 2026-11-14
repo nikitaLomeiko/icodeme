@@ -1,36 +1,30 @@
 import { useState } from "react";
 
-interface UseFocusedProps {
-  onFocus?: (e: any) => void;
-  onBlur?: (e: any) => void;
+interface UseFocusedProps<TElement extends HTMLElement> {
+  onFocus?: React.FocusEventHandler<TElement>;
+  onBlur?: React.FocusEventHandler<TElement>;
 }
 
-interface UseFocusedReturn {
+interface UseFocusedReturn<TElement extends HTMLElement> {
   isFocused: boolean;
-  handleFocus: (e: any, func?: () => void) => void;
-  handleBlur: (e: any, func?: () => void) => void;
+  handleFocus: (e: React.FocusEvent<TElement>, func?: () => void) => void;
+  handleBlur: (e: React.FocusEvent<TElement>, func?: () => void) => void;
   setIsFocused: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const useFocused = ({
+export const useFocused = <TElement extends HTMLElement = HTMLInputElement>({
   onFocus,
   onBlur,
-}: UseFocusedProps): UseFocusedReturn => {
+}: UseFocusedProps<TElement>): UseFocusedReturn<TElement> => {
   const [isFocused, setIsFocused] = useState(false);
 
-  const handleFocus = (
-    e: React.FocusEvent<HTMLInputElement>,
-    func?: () => void,
-  ) => {
+  const handleFocus = (e: React.FocusEvent<TElement>, func?: () => void) => {
     setIsFocused(true);
     onFocus?.(e);
     func?.();
   };
 
-  const handleBlur = (
-    e: React.FocusEvent<HTMLInputElement>,
-    func?: () => void,
-  ) => {
+  const handleBlur = (e: React.FocusEvent<TElement>, func?: () => void) => {
     setIsFocused(false);
     onBlur?.(e);
     func?.();

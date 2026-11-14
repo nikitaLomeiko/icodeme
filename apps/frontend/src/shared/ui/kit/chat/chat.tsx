@@ -8,7 +8,7 @@ import { Message } from "./ui/message";
 import { ChatHeader } from "./ui/chat.header";
 import { TypingEffect } from "./ui/typing.effect";
 import { IChatMessage } from "./types/chat.types";
-import { generateId } from "@/shared/lib/utils/generate-id";
+import { generateId } from "@/shared/lib";
 
 interface IProps {
   logoSrc: string;

@@ -1,8 +1,9 @@
 import {
   Controller,
+  Body,
   Get,
   Post,
-  Request,
+  Req,
   Res,
   UseGuards,
   UnauthorizedException,
@@ -11,28 +12,32 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import type { Response } from 'express';
-import { AuthService, AuthError } from '@services/authService';
+import type { Request, Response } from 'express';
+import { AuthService } from '../services/auth.service';
+import { AuthError } from '../types';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import {
-  cookie,
-  setSession,
-  clearSession,
-  textField,
-} from '@services/authService/helpers/Auth.http';
+  ConfirmCodeDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  SendConfirmCodeDto,
+} from '../dto';
+import type { AuthenticatedUser } from '../types';
+import { cookie, setSession, clearSession } from '../helpers/auth.http';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  async login(@Request() req, @Res({ passthrough: true }) res: Response) {
-    const email = textField(req.body, 'email', 3, 254);
-    const result = await this.authService.login(
-      email,
-      textField(req.body, 'password', 1, 72),
-    );
+  async login(
+    @Body() data: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(data.email, data.password);
     if (result.error === AuthError.MAIL_NOT_CONFIRMED) {
-      await this.authService.generateAndSendConfirmCode(email, 'email');
+      await this.authService.generateAndSendConfirmCode(data.email, 'email');
       throw new ForbiddenException('Подтвердите почту перед входом');
     }
     if (!result.success || !result.data)
@@ -46,33 +51,27 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Request() req) {
-    const email = textField(req.body, 'email', 3, 254);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      throw new BadRequestException('Invalid email');
-    const result = await this.authService.register(
-      email,
-      textField(req.body, 'password', 8, 72),
-    );
+  async register(@Body() data: RegisterDto) {
+    const result = await this.authService.register(data.email, data.password);
     if (!result.success)
       throw new ConflictException('Не удалось зарегистрировать аккаунт');
-    await this.authService.generateAndSendConfirmCode(email, 'email');
+    await this.authService.generateAndSendConfirmCode(data.email, 'email');
     return { ...result, message: 'Код отправлен на почту' };
   }
 
   @Post('confirm/code-email')
-  async confirmEmail(@Request() req) {
-    return this.confirm(req, false);
+  async confirmEmail(@Body() data: ConfirmCodeDto) {
+    return this.confirm(data, false);
   }
   @Post('confirm/code-reset-password')
-  async confirmReset(@Request() req) {
-    return this.confirm(req, true);
+  async confirmReset(@Body() data: ConfirmCodeDto) {
+    return this.confirm(data, true);
   }
-  private async confirm(req, reset: boolean) {
+  private async confirm(data: ConfirmCodeDto, reset: boolean) {
     const result = await this.authService.confirmCode(
-      textField(req.body, 'code', 5, 5),
-      textField(req.body, 'userId'),
-      reset ? { isResetPassword: true } : { isEmailConfirmed: true },
+      data.code,
+      data.userId,
+      reset ? 'reset' : 'email',
     );
     if (!result.success)
       throw new BadRequestException('Неверный или просроченный код');
@@ -80,10 +79,10 @@ export class AuthController {
   }
 
   @Post('send/confirm-code')
-  async sendCode(@Request() req) {
-    const purpose = req.body?.purpose === 'email' ? 'email' : 'reset';
+  async sendCode(@Body() data: SendConfirmCodeDto) {
+    const purpose = data.purpose ?? 'reset';
     const result = await this.authService.generateAndSendConfirmCode(
-      textField(req.body, 'email', 3, 254),
+      data.email,
       purpose,
     );
     if (!result.success)
@@ -92,11 +91,11 @@ export class AuthController {
   }
 
   @Post('reset/password')
-  async reset(@Request() req) {
+  async reset(@Body() data: ResetPasswordDto) {
     const result = await this.authService.resetPassword(
-      textField(req.body, 'userId'),
-      textField(req.body, 'newPassword', 8, 72),
-      textField(req.body, 'resetToken', 64, 64),
+      data.userId,
+      data.newPassword,
+      data.resetToken,
     );
     if (!result.success)
       throw new ForbiddenException('Подтвердите сброс пароля заново');
@@ -104,9 +103,12 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() request: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.refreshToken(
-      cookie(req, 'icodeme_refresh'),
+      cookie(request, 'icodeme_refresh'),
     );
     if (!result.success || !result.data)
       throw new UnauthorizedException('Сессия истекла');
@@ -115,21 +117,24 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Request() req, @Res({ passthrough: true }) res: Response) {
-    await this.authService.logout(cookie(req, 'icodeme_refresh'));
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.logout(cookie(request, 'icodeme_refresh'));
     clearSession(res);
     return { success: true };
   }
 
   @Post('validate/tokens')
   @UseGuards(AuthGuard('jwt'))
-  async validate() {
+  validate() {
     return { success: true };
   }
 
   @Get('verify-token')
   @UseGuards(AuthGuard('jwt'))
-  async verifyToken(@Request() req) {
-    return { success: true, data: req.user };
+  verifyToken(@CurrentUser() user: AuthenticatedUser) {
+    return { success: true, data: user };
   }
 }

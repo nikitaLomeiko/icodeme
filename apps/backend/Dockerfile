@@ -5,6 +5,17 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
+FROM dependencies AS development
+
+ENV NODE_ENV=development \
+    PORT=3000
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start:dev"]
+
 FROM dependencies AS build
 
 COPY nest-cli.json tsconfig.json tsconfig.build.json ./

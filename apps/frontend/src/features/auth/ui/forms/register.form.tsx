@@ -18,16 +18,13 @@ import {
 } from "../../model/validate/auth.schema";
 import { setUserId, useRegisterMutation } from "@/entities/auth";
 import { isApiError } from "@/shared/api";
-import { useAppDispatch } from "@/shared/lib/hooks";
+import { useAppDispatch } from "@/shared/lib";
 
-interface RegisterFormProps extends Omit<IBaseFormProps, "onSuccess"> {
+interface IProps extends Omit<IBaseFormProps, "onSuccess"> {
   onSuccess?: (credentials: { email: string; password: string }) => void;
 }
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({
-  onSuccess,
-  setError,
-}) => {
+export const RegisterForm: React.FC<IProps> = ({ onSuccess, setError }) => {
   const {
     register,
     handleSubmit,

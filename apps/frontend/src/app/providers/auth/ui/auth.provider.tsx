@@ -4,39 +4,49 @@ import { usePathname } from "next/navigation";
 import { useStore } from "react-redux";
 import type { RootState } from "@/app/providers/redux-store";
 import { setAuthData, useLazyVerifyTokenQuery } from "@/entities/auth";
-import { useAppDispatch } from "@/shared/lib/hooks";
+import { useAppDispatch } from "@/shared/lib";
 import {
   invalidateSession,
   sessionRevision,
   subscribeSession,
-} from "@/shared/api/session";
+} from "@/shared/api";
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+interface IProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider: React.FC<IProps> = ({ children }) => {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
   const [verify] = useLazyVerifyTokenQuery();
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+
   useEffect(() => {
     try {
       localStorage.removeItem("auth_token");
     } catch {}
+
     return subscribeSession(() => {
       invalidateSession();
       window.location.reload();
     });
   }, []);
+
   useEffect(() => {
     if (
       ["/oauth/success", "/oauth/telegram"].includes(pathname) ||
       store.getState().auth.isAuthenticated !== null
     )
       return;
+
     let active = true;
     const revision = sessionRevision();
+
     void verify(null).then((result) => {
       if (!active || revision !== sessionRevision()) return;
+
       if (result.data?.data)
         dispatch(
           setAuthData({
@@ -47,10 +57,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       else if (result.error && store.getState().auth.isAuthenticated === null)
         setFailed(true);
     });
+
     return () => {
       active = false;
     };
   }, [attempt, dispatch, pathname, store, verify]);
+
   if (failed)
     return (
       <div role="alert" className="p-6 text-center">
@@ -65,5 +77,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         </button>
       </div>
     );
+
   return children;
 };

@@ -1,1 +1,9 @@
 export { AuthModule } from './auth.module';
+export { AuthService } from './services/auth.service';
+export { OAuthService } from './services/oauth.service';
+export { AuthSecurityGuard } from './strategies/auth-security.guard';
+export { GitHubStrategy } from './strategies/github.strategy';
+export { GoogleStrategy } from './strategies/google.strategy';
+export { JwtStrategy } from './strategies/jwt.strategy';
+export { allowedOrigins } from './helpers/auth.http';
+export { AuthError } from './types';

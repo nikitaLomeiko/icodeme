@@ -1,5 +1,11 @@
 import { Layout } from "@/widgets/layout";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
-  return <Layout>{children}</Layout>;
+interface IProps {
+  children: React.ReactNode;
 }
+
+const MainLayout: React.FC<IProps> = ({ children }) => {
+  return <Layout>{children}</Layout>;
+};
+
+export default MainLayout;

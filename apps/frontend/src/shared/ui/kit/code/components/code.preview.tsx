@@ -7,12 +7,19 @@ import {
   buildPreviewDocument,
   findMainHtmlFile,
 } from "../libs/utils/build-document";
-import { useEnviroment } from "../store/enviroment";
-import { useExplorer } from "../store/file/use.explorer";
+import { useEnvironment } from "../store/environment";
+import { useFileTree } from "../store/file/use.explorer";
+import { getAllFiles } from "../store/file/file.reducer";
 
 export const CodePreview: React.FC = () => {
-  const { allFiles } = useExplorer();
-  const { previewOpen, dispatch } = useEnviroment();
+  const { previewOpen } = useEnvironment();
+  return previewOpen ? <OpenCodePreview /> : null;
+};
+
+const OpenCodePreview: React.FC = () => {
+  const { files } = useFileTree();
+  const { previewOpen, dispatch } = useEnvironment();
+  const allFiles = useMemo(() => getAllFiles(files), [files]);
 
   const previewDocument = useMemo(
     () => buildPreviewDocument(allFiles),

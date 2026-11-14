@@ -13,11 +13,11 @@ interface IProps {
   onSelectStep: (levelIndex: number, stepIndex: number) => void;
 }
 
-export const StudyModuleMap = ({
+export const StudyModuleMap: React.FC<IProps> = ({
   module,
   moduleIndex,
   onSelectStep,
-}: IProps) => (
+}) => (
   <div className="w-full px-4 py-6">
     <Module
       {...module}

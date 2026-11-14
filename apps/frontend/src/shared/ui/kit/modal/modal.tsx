@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { ModalProps } from "./types";
 import {
@@ -10,30 +10,39 @@ import {
   ModalHeader,
 } from "./components";
 
-export const Modal: React.FC<ModalProps> = ({
-  isOpen,
-  onClose,
-  children,
-  title,
-  variant = "dark",
-  size = "md",
-  position = "center",
-  closeOnOverlayClick = true,
-  closeOnEsc = true,
-  showCloseButton = true,
-  className = "",
-  overlayClassName = "",
-  contentClassName = "",
-  withAnimation = true,
-  blurBackground = false,
-  zIndex = 50,
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState<string>("light");
+interface IProps extends ModalProps {}
 
-  useEffect(() => {
-    const getCurrentTheme = () => {
+export const Modal: React.FC<IProps> = (props) => {
+  const {
+    isOpen,
+    onClose,
+    children,
+    title,
+    variant = "dark",
+    size = "md",
+    position = "center",
+    closeOnOverlayClick = true,
+    closeOnEsc = true,
+    showCloseButton = true,
+    className = "",
+    overlayClassName = "",
+    contentClassName = "",
+    withAnimation = true,
+    blurBackground = false,
+    zIndex = 50,
+  } = props;
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const currentTheme = useSyncExternalStore(
+    (onStoreChange) => {
+      const observer = new MutationObserver(onStoreChange);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme", "class"],
+      });
+      return () => observer.disconnect();
+    },
+    () => {
       const htmlTheme = document.documentElement.getAttribute("data-theme");
       const bodyClass = document.body.className;
 
@@ -42,36 +51,28 @@ export const Modal: React.FC<ModalProps> = ({
       if (bodyClass.includes("light")) return "light";
 
       return "light";
-    };
-
-    setCurrentTheme(getCurrentTheme());
-
-    const observer = new MutationObserver(() => {
-      setCurrentTheme(getCurrentTheme());
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme", "class"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
+    },
+    () => "light",
+  );
 
   useEffect(() => {
     if (isOpen) {
-      setShouldRender(true);
-      requestAnimationFrame(() => {
+      const renderFrame = requestAnimationFrame(() => {
+        setShouldRender(true);
         requestAnimationFrame(() => {
           setIsVisible(true);
         });
       });
+      return () => cancelAnimationFrame(renderFrame);
     } else {
-      setIsVisible(false);
+      const hideFrame = requestAnimationFrame(() => setIsVisible(false));
       const timer = setTimeout(() => {
         setShouldRender(false);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => {
+        cancelAnimationFrame(hideFrame);
+        clearTimeout(timer);
+      };
     }
   }, [isOpen]);
 

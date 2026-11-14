@@ -21,7 +21,7 @@ import {
   FaRobot,
 } from "react-icons/fa";
 
-export default function Test() {
+const InputTestPage: React.FC = () => {
   const notification = useNotification();
   const [values, setValues] = useState({
     text: "",
@@ -419,4 +419,6 @@ export default function Test() {
       </div>
     </div>
   );
-}
+};
+
+export default InputTestPage;

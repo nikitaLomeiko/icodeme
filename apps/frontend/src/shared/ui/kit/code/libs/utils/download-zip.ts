@@ -1,6 +1,9 @@
 import { FileNode } from "../../types/types";
 
-export function downloadAsZip(files: Array<{ path: string; content: string }>, projectName: string = 'project'): void {
+export function downloadAsZip(
+  files: Array<{ path: string; content: string }>,
+  projectName: string = "project",
+): void {
   const encoder = new TextEncoder();
 
   function writeUint32(view: DataView, offset: number, value: number) {
@@ -21,7 +24,7 @@ export function downloadAsZip(files: Array<{ path: string; content: string }>, p
     const localSize = 30 + nameBytes.byteLength + contentBytes.byteLength;
     const localBuf = new ArrayBuffer(localSize);
     const localView = new DataView(localBuf);
-    
+
     writeUint32(localView, 0, 0x04034b50);
     writeUint16(localView, 4, 20);
     writeUint16(localView, 6, 0);
@@ -35,7 +38,11 @@ export function downloadAsZip(files: Array<{ path: string; content: string }>, p
     writeUint16(localView, 28, 0);
 
     new Uint8Array(localBuf, 30, nameBytes.byteLength).set(nameBytes);
-    new Uint8Array(localBuf, 30 + nameBytes.byteLength, contentBytes.byteLength).set(contentBytes);
+    new Uint8Array(
+      localBuf,
+      30 + nameBytes.byteLength,
+      contentBytes.byteLength,
+    ).set(contentBytes);
 
     localHeaders.push(localBuf);
 
@@ -79,8 +86,10 @@ export function downloadAsZip(files: Array<{ path: string; content: string }>, p
   writeUint32(eocdView, 16, centralOffset);
   writeUint16(eocdView, 20, 0);
 
-  const totalSize = localHeaders.reduce((s, b) => s + b.byteLength, 0) +
-    centralEntries.reduce((s, b) => s + b.byteLength, 0) + eocdSize;
+  const totalSize =
+    localHeaders.reduce((s, b) => s + b.byteLength, 0) +
+    centralEntries.reduce((s, b) => s + b.byteLength, 0) +
+    eocdSize;
   const finalBuf = new ArrayBuffer(totalSize);
   const finalArr = new Uint8Array(finalBuf);
   let pos = 0;
@@ -95,9 +104,9 @@ export function downloadAsZip(files: Array<{ path: string; content: string }>, p
   }
   finalArr.set(new Uint8Array(eocdBuf), pos);
 
-  const blob = new Blob([finalBuf], { type: 'application/zip' });
+  const blob = new Blob([finalBuf], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `${projectName}.zip`;
   document.body.appendChild(a);
@@ -106,13 +115,15 @@ export function downloadAsZip(files: Array<{ path: string; content: string }>, p
   URL.revokeObjectURL(url);
 }
 
-export function flattenTree(nodes: FileNode[]): Array<{ path: string; content: string }> {
+export function flattenTree(
+  nodes: FileNode[],
+): Array<{ path: string; content: string }> {
   const result: Array<{ path: string; content: string }> = [];
 
   function walk(list: FileNode[], prefix: string) {
     for (const node of list) {
       const fullPath = prefix ? `${prefix}/${node.name}` : node.name;
-      if (node.type === 'file') {
+      if (node.type === "file") {
         result.push({ path: fullPath, content: node.content });
       }
       if (node.children) {
@@ -121,6 +132,6 @@ export function flattenTree(nodes: FileNode[]): Array<{ path: string; content: s
     }
   }
 
-  walk(nodes, '');
+  walk(nodes, "");
   return result;
 }

@@ -1,6 +1,6 @@
 import { FiDownload, FiFilePlus, FiFolderPlus, FiUpload } from "react-icons/fi";
-import { FileAction, FileNode } from "../../types/types";
-import { useExplorer } from "../../store/file/use.explorer";
+import { flattenTree, downloadAsZip } from "../../libs/utils/download-zip";
+import { useFileDispatch, useFileTree } from "../../store/file/use.explorer";
 
 interface IProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -10,7 +10,12 @@ interface IProps {
 export const TreeHeader: React.FC<IProps> = (props) => {
   const { fileInputRef, folderInputRef } = props;
 
-  const { handleDownload, dispatch, files } = useExplorer();
+  const { files } = useFileTree();
+  const dispatch = useFileDispatch();
+  const handleDownload = () => {
+    const flat = flattenTree(files);
+    if (flat.length > 0) downloadAsZip(flat, "project");
+  };
 
   return (
     <div className="flex gap-1">

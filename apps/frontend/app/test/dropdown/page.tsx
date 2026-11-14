@@ -16,7 +16,7 @@ import {
   FiSearch,
 } from "react-icons/fi";
 
-function DropdownPage() {
+const DropdownPage: React.FC = () => {
   const testOptions = [
     { value: "1", label: "Опция 1" },
     { value: "2", label: "Опция 2" },
@@ -280,6 +280,6 @@ function DropdownPage() {
       </div>
     </Layout>
   );
-}
+};
 
 export default withAuth(withAccount(DropdownPage));

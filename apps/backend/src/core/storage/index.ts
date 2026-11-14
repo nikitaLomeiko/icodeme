@@ -1,2 +1,2 @@
 export { BaseFileStorage } from './base';
-export { FileStorageProvider } from './FileStorage.provider';
+export { FileStorageProvider } from './file-storage.provider';

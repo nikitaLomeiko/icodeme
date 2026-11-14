@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Checkbox, useNotification } from "@/shared/ui/kit";
 
-export default function Test() {
+const ButtonTestPage: React.FC = () => {
   const notification = useNotification();
   const [checkboxStates, setCheckboxStates] = useState({
     default: false,
@@ -322,4 +322,6 @@ export default function Test() {
       </div>
     </div>
   );
-}
+};
+
+export default ButtonTestPage;

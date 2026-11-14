@@ -1,45 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useTelegramVerifiyMutation } from "@/entities/auth";
+import { useSyncExternalStore } from "react";
+import { useOAuthTelegram } from "@/entities/auth/model/hooks/use-oauth-telegram";
 import { Loader } from "@/shared/ui/kit";
 
-const DOMAIN = "/";
+const subscribeToLocationHash = () => () => undefined;
+const getLocationHash = () => window.location.hash.substring(1);
+const getServerLocationHash = () => "";
 
-interface IProps {
-  hash: string;
-}
+export const OAuthTelegramPage: React.FC = () => {
+  const hash = useSyncExternalStore(
+    subscribeToLocationHash,
+    getLocationHash,
+    getServerLocationHash,
+  );
 
-export const OAuthTelegramPage: React.FC<IProps> = ({ hash }) => {
-  const [verify] = useTelegramVerifiyMutation();
-  const startedRef = useRef(false);
-
-  useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    const params = Object.fromEntries(
-      new URLSearchParams(hash.replace(/^#/, "")),
-    );
-    window.history.replaceState(null, "", window.location.pathname);
-
-    const authorize = async () => {
-      try {
-        const result = await verify(JSON.stringify(params)).unwrap();
-
-        if (!result.success || !result.data) {
-          window.location.href = `${DOMAIN}oauth/error`;
-          return;
-        }
-
-        window.location.replace(`${DOMAIN}oauth/success`);
-      } catch {
-        window.location.href = `${DOMAIN}oauth/error`;
-      }
-    };
-
-    authorize();
-  }, [hash, verify]);
+  useOAuthTelegram(hash);
 
   return (
     <div className="flex justify-center items-center h-screen">

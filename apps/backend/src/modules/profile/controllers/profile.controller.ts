@@ -5,16 +5,18 @@ import {
   Put,
   Delete,
   Body,
-  Request,
   UseGuards,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IProfile, IProfileData } from '@models/profile/Profile.model';
-import { ProfileService } from '@services/profileService';
-import { IControllerResponse } from '@core/types/Response.type';
-import { ProfileError } from '@services/profileService/types/Error.types';
+import { IProfile } from '../models/profile.model';
+import { ProfileService } from '../services/profile.service';
+import { IControllerResponse } from '@core/types/response.type';
+import { ProfileError } from '../types/profile-error.types';
+import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '@modules/auth/types';
+import { CreateProfileDto, UpdateProfileDto } from '../dto';
 
 @Controller('profiles')
 @UseGuards(AuthGuard('jwt'))
@@ -22,8 +24,10 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get('me')
-  async getMyProfile(@Request() req): Promise<IControllerResponse<IProfile>> {
-    const result = await this.profileService.getProfileById(req.user.userId);
+  async getMyProfile(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<IControllerResponse<IProfile>> {
+    const result = await this.profileService.getProfileById(user.userId);
 
     if (result.error === ProfileError.PROFILE_NOT_FOUND) {
       throw new NotFoundException('Profile not found');
@@ -34,10 +38,10 @@ export class ProfileController {
 
   @Post('me')
   async createNewProfile(
-    @Request() req,
-    @Body() data: { profileData: Omit<IProfileData, 'chips' | 'position'> },
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: CreateProfileDto,
   ): Promise<IControllerResponse<IProfile>> {
-    const result = await this.profileService.CreateNewProfile(req.user.userId, {
+    const result = await this.profileService.createNewProfile(user.userId, {
       ...data.profileData,
       chips: ['test', 'test'],
       position: 'Begginer',
@@ -52,12 +56,12 @@ export class ProfileController {
 
   @Put('me')
   async updateMyProfile(
-    @Request() req,
-    @Body() data: { profileData: IProfileData },
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: UpdateProfileDto,
   ): Promise<IControllerResponse<IProfile>> {
-    const result = await this.profileService.ChangeProfileDataById(
+    const result = await this.profileService.changeProfileDataById(
       data.profileData,
-      req.user.userId,
+      user.userId,
     );
 
     if (!result.success) {
@@ -68,8 +72,10 @@ export class ProfileController {
   }
 
   @Delete('me')
-  async deleteMyProfile(@Request() req): Promise<IControllerResponse> {
-    const result = await this.profileService.RemoveProfileById(req.user.userId);
+  async deleteMyProfile(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<IControllerResponse> {
+    const result = await this.profileService.removeProfileById(user.userId);
 
     if (!result.success) {
       throw new NotFoundException(result.error);

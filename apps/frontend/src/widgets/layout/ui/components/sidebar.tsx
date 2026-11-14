@@ -76,7 +76,10 @@ export const Sidebar: React.FC<IProps> = (props) => {
                 <Tab
                   {...tab}
                   onActive={() => handleTabSetSelectedId(tab.id)}
-                  isActive={tab.id === tabSelectedId || (tab.id === "Other" && isMoreOpen)}
+                  isActive={
+                    tab.id === tabSelectedId ||
+                    (tab.id === "Other" && isMoreOpen)
+                  }
                   isCollapsed={isCollapsed}
                 />
                 {tab.id === "Other" && isMoreOpen && (
@@ -101,7 +104,9 @@ export const Sidebar: React.FC<IProps> = (props) => {
             ))}
           </nav>
 
-          <div className={`border-t border-[var(--ui-border)] text-xs text-[var(--ui-text)] ${isCollapsed ? "p-2 text-center" : "p-4"}`}>
+          <div
+            className={`border-t border-[var(--ui-border)] text-xs text-[var(--ui-text)] ${isCollapsed ? "p-2 text-center" : "p-4"}`}
+          >
             <Title size="xs" as="p">
               {isCollapsed ? "©" : "© 2026 Your App"}
             </Title>

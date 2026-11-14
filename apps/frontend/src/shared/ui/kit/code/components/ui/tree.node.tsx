@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import {
   FiChevronRight,
   FiEdit2,
@@ -11,17 +11,21 @@ import {
 import { FileNode } from "../../types/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { RenamingForm } from "../forms/renaming.form";
-import { useExplorer } from "../../store/file/use.explorer";
+import {
+  useFileDispatch,
+  useFileSelection,
+} from "../../store/file/use.explorer";
 
 interface IProps {
   node: FileNode;
   depth: number;
 }
 
-export const TreeNode: React.FC<IProps> = (props) => {
+const TreeNodeComponent: React.FC<IProps> = (props) => {
   const { node, depth } = props;
 
-  const { activeFileId, dispatch, setActiveFileId } = useExplorer();
+  const { activeFileId, setActiveFileId } = useFileSelection();
+  const dispatch = useFileDispatch();
 
   const [expanded, setExpanded] = useState(true);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -222,3 +226,5 @@ export const TreeNode: React.FC<IProps> = (props) => {
     </div>
   );
 };
+
+export const TreeNode: React.FC<IProps> = memo(TreeNodeComponent);

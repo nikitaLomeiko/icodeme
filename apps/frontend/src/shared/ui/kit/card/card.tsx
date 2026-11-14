@@ -11,27 +11,30 @@ import {
 import { CardSkeleton } from "./components/card.skeleton";
 import { CardFooter, CardHeader } from "./components";
 
-export const Card: React.FC<CardProps> = ({
-  children,
-  title,
-  subtitle,
-  variant = "default",
-  padding = "md",
-  radius = "md",
-  withHeader = true,
-  withFooter = false,
-  headerAction,
-  footer,
-  hoverable = false,
-  clickable = false,
-  onClick,
-  className = "",
-  headerClassName = "",
-  bodyClassName = "",
-  footerClassName = "",
-  loading = false,
-  disabled = false,
-}) => {
+interface IProps extends CardProps {}
+
+export const Card: React.FC<IProps> = (props) => {
+  const {
+    children,
+    title,
+    subtitle,
+    variant = "default",
+    padding = "md",
+    radius = "md",
+    withHeader = true,
+    withFooter = false,
+    headerAction,
+    footer,
+    hoverable = false,
+    clickable = false,
+    onClick,
+    className = "",
+    headerClassName = "",
+    bodyClassName = "",
+    footerClassName = "",
+    loading = false,
+    disabled = false,
+  } = props;
   const isClickable = clickable && onClick;
   const showHeader = withHeader && (title || subtitle || headerAction);
   const showFooter = withFooter && footer;

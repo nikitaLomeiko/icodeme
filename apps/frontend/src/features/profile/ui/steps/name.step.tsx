@@ -1,16 +1,12 @@
 import { TextField } from "@/shared/ui/kit";
 
-interface NameStepProps {
+interface IProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
 }
 
-export const NameStep: React.FC<NameStepProps> = ({
-  value,
-  onChange,
-  error,
-}) => {
+export const NameStep: React.FC<IProps> = ({ value, onChange, error }) => {
   return (
     <TextField
       id="name"

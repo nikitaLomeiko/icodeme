@@ -312,6 +312,6 @@ export const useCarousel = (options: CarouselOptions = {}) => {
     reInit,
     scrollTo,
     api,
-    isAnimating: isAnimatingRef.current,
+    isAnimating: () => isAnimatingRef.current,
   };
 };

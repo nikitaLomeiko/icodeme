@@ -1,10 +1,8 @@
 import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { InputMode, InputSize, InputVariant } from "./field.types";
 
-export interface BaseInputProps extends Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  "size" | "inputMode"
-> {
+export interface BaseInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "inputMode"> {
   id: string;
   label?: string;
   icon?: React.ElementType;
@@ -18,10 +16,11 @@ export interface BaseInputProps extends Omit<
   inputMode?: InputMode;
 }
 
-export interface BaseTextareaProps extends Omit<
-  TextareaHTMLAttributes<HTMLTextAreaElement>,
-  "size" | "inputMode"
-> {
+export interface BaseTextareaProps
+  extends Omit<
+    TextareaHTMLAttributes<HTMLTextAreaElement>,
+    "size" | "inputMode"
+  > {
   id: string;
   label?: string;
   iconLeft?: React.ElementType;

@@ -4,13 +4,15 @@ import { authApi } from "@/entities/auth";
 import { profileApi } from "@/entities/profile";
 import { studyApi, studySliceReducer } from "@/entities/study";
 import { documentApi } from "@/entities/document";
-import { ideApi } from "@/entities/ide";
+import { ideApi } from "@/features/ide";
+import { quizReducer } from "@/features/quiz/model";
 import { accountCache } from "./middlewares/account.cache";
 
 export const store = configureStore({
   reducer: {
     auth: authSliceReducer,
     study: studySliceReducer,
+    quiz: quizReducer,
     [authApi.reducerPath]: authApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [studyApi.reducerPath]: studyApi.reducer,

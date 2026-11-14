@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { OAuth } from "./ouath";
+import { OAuth } from "./oauth";
 import { Notification, Title } from "@/shared/ui/kit";
 import { AuthModeSwitcher } from "./ui/auth.mode.switcher";
 import { Logotype } from "@/shared/ui/logotype";

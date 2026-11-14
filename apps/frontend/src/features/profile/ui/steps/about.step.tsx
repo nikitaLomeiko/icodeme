@@ -1,16 +1,12 @@
 import { TextareaField } from "@/shared/ui/kit";
 
-interface AboutStepProps {
+interface IProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
 }
 
-export const AboutStep: React.FC<AboutStepProps> = ({
-  value,
-  onChange,
-  error,
-}) => {
+export const AboutStep: React.FC<IProps> = ({ value, onChange, error }) => {
   return (
     <TextareaField
       id="bio"

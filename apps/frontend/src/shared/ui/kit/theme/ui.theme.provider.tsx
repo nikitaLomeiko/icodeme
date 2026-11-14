@@ -2,24 +2,25 @@
 
 import React, { useEffect, useState } from "react";
 import "./styles/theme.css";
-import "@/app/styles/themes.css";
-import { ThemeEnum } from "./types/theme.typs";
+import "./styles/layout-theme.css";
+import { ThemeEnum } from "./types/theme.types";
 import { ThemeContext } from "./context/theme.context";
-import { getAvailableThemes } from "./lib/utils/getAvailableThemes";
+import { getAvailableThemes } from "./lib/utils/get-available-themes";
 
-interface UIThemeProviderProps {
+interface IProps {
   children: React.ReactNode;
   theme: ThemeEnum;
   limit?: number;
   availableThemes?: ThemeEnum[];
 }
 
-export const UIThemeProvider: React.FC<UIThemeProviderProps> = ({
-  children,
-  theme: initialTheme,
-  limit,
-  availableThemes: customThemes,
-}) => {
+export const UIThemeProvider: React.FC<IProps> = (props) => {
+  const {
+    children,
+    theme: initialTheme,
+    limit,
+    availableThemes: customThemes,
+  } = props;
   const [theme, setThemeState] = useState<ThemeEnum>(initialTheme);
   const availableThemes = customThemes || getAvailableThemes(limit);
 
@@ -35,11 +36,12 @@ export const UIThemeProvider: React.FC<UIThemeProviderProps> = ({
         ? storedTheme
         : theme;
 
-    if (activeTheme !== theme) {
-      setThemeState(activeTheme);
-    }
+    const frame = requestAnimationFrame(() => {
+      if (activeTheme !== theme) setThemeState(activeTheme);
+    });
 
     document.documentElement.setAttribute("data-theme", activeTheme);
+    return () => cancelAnimationFrame(frame);
   }, [availableThemes, theme]);
 
   return (

@@ -37,7 +37,8 @@ export const StepRuntimeInfo: React.FC<IProps> = ({ settings }) => {
     settings?.language
       ? {
           label: "Язык",
-          value: languageNames[settings.language.toLowerCase()] ?? settings.language,
+          value:
+            languageNames[settings.language.toLowerCase()] ?? settings.language,
           code: settings.language,
         }
       : null,

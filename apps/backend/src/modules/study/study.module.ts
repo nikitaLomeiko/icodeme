@@ -1,20 +1,21 @@
 import { Module } from '@nestjs/common';
-import * as dotenv from 'dotenv';
 
-import { GeneralModule } from '@modules/general';
-
-import { StudyService } from '@services/studyService/StudyService';
-import { ProfileService } from '@services/profileService';
+import { StudyService } from './services/study.service';
+import { StudyPlanService } from './services/study-plan.service';
+import { StudyGenerationService } from './services/study-generation.service';
 
 import { StudyController } from './controllers/study.controller';
 import { AIProvider } from '@core/ai';
 import { FileStorageProvider } from '@core/storage';
 
-dotenv.config();
-
 @Module({
-  imports: [GeneralModule],
-  providers: [StudyService, ProfileService, AIProvider, FileStorageProvider],
+  providers: [
+    StudyService,
+    StudyPlanService,
+    StudyGenerationService,
+    AIProvider,
+    FileStorageProvider,
+  ],
   controllers: [StudyController],
   exports: [StudyService],
 })

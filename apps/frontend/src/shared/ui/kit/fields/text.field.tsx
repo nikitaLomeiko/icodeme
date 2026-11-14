@@ -14,7 +14,9 @@ import { useFocused } from "./hooks/use.focused";
 import { useInternal } from "./hooks/use.internal";
 import { FieldIcon } from "./ui/field.icon";
 
-export const TextField = forwardRef<HTMLInputElement, BaseInputProps>(
+interface IProps extends BaseInputProps {}
+
+export const TextField = forwardRef<HTMLInputElement, IProps>(
   (props, forwardedRef) => {
     const {
       id,

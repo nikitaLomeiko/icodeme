@@ -33,7 +33,7 @@ function fixture(handler) {
   const calls = [];
   const session = compile("src/shared/api/session.ts", {});
   const { fetchBase } = compile("src/shared/api/fetch.base.ts", {
-    "./consts": { BASE_URL: "http://localhost:3000/" },
+    "./consts": { baseUrl: "http://localhost:3000/" },
     "./session": session,
     "@reduxjs/toolkit/query": {
       fetchBaseQuery: (options) =>

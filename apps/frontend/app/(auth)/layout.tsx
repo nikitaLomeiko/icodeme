@@ -1,5 +1,11 @@
 import { AuthLayout } from "@/widgets/auth-layout";
 
-export default function AuthLayoutGroup({ children }: { children: React.ReactNode }) {
-  return <AuthLayout>{children}</AuthLayout>;
+interface IProps {
+  children: React.ReactNode;
 }
+
+const AuthLayoutGroup: React.FC<IProps> = ({ children }) => {
+  return <AuthLayout>{children}</AuthLayout>;
+};
+
+export default AuthLayoutGroup;

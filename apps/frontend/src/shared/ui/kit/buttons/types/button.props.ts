@@ -1,9 +1,7 @@
 import { ButtonSize, ButtonVariant } from "./button.types";
 
-export interface BaseButtonProps extends Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  "children"
-> {
+export interface BaseButtonProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;

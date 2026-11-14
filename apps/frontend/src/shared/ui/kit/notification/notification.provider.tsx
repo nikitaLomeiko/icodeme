@@ -5,7 +5,10 @@ import {
   NotificationContext,
   NotificationContextType,
 } from "./context/notification.context";
-import { NotificationItem, NotificationProviderConfig } from "./types/notification.types";
+import {
+  NotificationItem,
+  NotificationProviderConfig,
+} from "./types/notification.types";
 
 const defaultConfig: Required<NotificationProviderConfig> = {
   maxNotifications: 5,
@@ -13,11 +16,12 @@ const defaultConfig: Required<NotificationProviderConfig> = {
   position: "top-right",
 };
 
-export const NotificationProvider: React.FC<
-  {
-    children: React.ReactNode;
-  } & NotificationProviderConfig
-> = ({ children, maxNotifications, defaultDuration, position }) => {
+interface IProps extends NotificationProviderConfig {
+  children: React.ReactNode;
+}
+
+export const NotificationProvider: React.FC<IProps> = (props) => {
+  const { children, maxNotifications, defaultDuration, position } = props;
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const config: Required<NotificationProviderConfig> = {

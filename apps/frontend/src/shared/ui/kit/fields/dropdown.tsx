@@ -9,7 +9,9 @@ import { BaseDropdownProps, DropdownOption } from "./types";
 import { getDropdownPosition, styleSize, stylesVariant } from "./styles";
 import { DropdownOption as ComponentDropdownOption } from "./ui/dropdown.option";
 
-export const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(
+interface IProps extends BaseDropdownProps {}
+
+export const Dropdown = forwardRef<HTMLDivElement, IProps>(
   (props, forwardedRef) => {
     const {
       id,
@@ -238,6 +240,7 @@ export const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(
                 ) : (
                   filteredOptions.map((option) => (
                     <ComponentDropdownOption
+                      key={option.value}
                       handleSelect={handleSelect}
                       multiple={multiple}
                       option={option}

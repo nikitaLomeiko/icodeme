@@ -1,1 +1,1 @@
-export * from "./BASE_URL";
+export * from "./base-url";

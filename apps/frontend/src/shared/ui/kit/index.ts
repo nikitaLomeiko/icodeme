@@ -1,3 +1,5 @@
+"use client";
+
 export * from "./fields";
 export * from "./buttons";
 export * from "./checkbox";
@@ -10,8 +12,7 @@ export * from "./loader";
 export * from "./carousel";
 export * from "./card";
 export * from "./modal";
-export * from './markdown'
-export * from "./quiz";
-export * from "./terminal";
+export * from "./markdown";
 export * from "./preview";
 export * from "./chat";
+export * from "./code";

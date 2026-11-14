@@ -18,14 +18,17 @@ const icons = {
   warning: <FaExclamationCircle className="text-xs" />,
 };
 
-export const Notification: React.FC<NotificationProps> = ({
-  type = "error",
-  message,
-  onClose,
-  autoClose = true,
-  autoCloseDelay = 3000,
-  className = "",
-}) => {
+interface IProps extends NotificationProps {}
+
+export const Notification: React.FC<IProps> = (props) => {
+  const {
+    type = "error",
+    message,
+    onClose,
+    autoClose = true,
+    autoCloseDelay = 3000,
+    className = "",
+  } = props;
   const [isVisible, setIsVisible] = React.useState(true);
 
   React.useEffect(() => {

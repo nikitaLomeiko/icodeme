@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { TreeNode } from "./ui/tree.node";
 import { TreeHeader } from "./ui/tree.header";
-import { useExplorer } from "../store/file/use.explorer";
-import { useEnviroment } from "../store/enviroment";
+import { useFileImports, useFileTree } from "../store/file/use.explorer";
+import { useEnvironment } from "../store/environment";
 
-export const FileExplorer = () => {
-  const { handleFileImport, handleFolderImport, files } = useExplorer();
-  const { sidebarWidth, sidebarOpen, dispatch } = useEnviroment();
+export const FileExplorer: React.FC = () => {
+  const { handleFileImport, handleFolderImport } = useFileImports();
+  const { files } = useFileTree();
+  const { sidebarWidth, sidebarOpen, dispatch } = useEnvironment();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +40,7 @@ export const FileExplorer = () => {
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
     },
-    [sidebarWidth],
+    [sidebarWidth, dispatch],
   );
 
   return (
@@ -65,7 +66,7 @@ export const FileExplorer = () => {
             ref={folderInputRef}
             type="file"
             multiple
-            /* @ts-ignore */
+            // @ts-expect-error Non-standard attribute supported by directory inputs.
             webkitdirectory=""
             onChange={handleFolderImport}
             style={{ display: "none" }}

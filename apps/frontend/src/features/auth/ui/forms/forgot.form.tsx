@@ -9,12 +9,11 @@ import { IBaseFormProps } from "../../model/types/form.props";
 import { ForgotFormData, forgotSchema } from "../../model/validate/auth.schema";
 import { setUserId, useSendConfirmCodeMutation } from "@/entities/auth";
 import { isApiError } from "@/shared/api";
-import { useAppDispatch } from "@/shared/lib/hooks";
+import { useAppDispatch } from "@/shared/lib";
 
-export const ForgotForm: React.FC<IBaseFormProps> = ({
-  setError,
-  onSuccess,
-}) => {
+interface IProps extends IBaseFormProps {}
+
+export const ForgotForm: React.FC<IProps> = ({ setError, onSuccess }) => {
   const {
     register,
     handleSubmit,

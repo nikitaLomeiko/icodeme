@@ -1,9 +1,9 @@
 "use client";
 
-import { Carousel, CarouselApi } from "@/shared/ui/kit/carousel";
+import { Carousel, CarouselApi } from "@/shared/ui/kit";
 import { useRef, useState, useEffect } from "react";
 
-export default function SliderTestPage() {
+const SliderTestPage: React.FC = () => {
   const carouselRef = useRef<CarouselApi>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -68,4 +68,6 @@ export default function SliderTestPage() {
       <p className="mt-4">Текущий индекс: {selectedIndex + 1}</p>
     </div>
   );
-}
+};
+
+export default SliderTestPage;

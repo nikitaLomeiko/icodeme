@@ -11,8 +11,8 @@ import {
 import { FormWrapper, AnimatedForm } from "./components";
 import { typeMode } from "../model/types/mode.types";
 import { useLoginMutation } from "@/entities/auth";
-import { setAuthData } from "@/entities/auth/model";
-import { useAppDispatch } from "@/shared/lib/hooks";
+import { setAuthData } from "@/entities/auth";
+import { useAppDispatch } from "@/shared/lib";
 import { isApiError } from "@/shared/api";
 
 interface RegistrationCredentials {
@@ -20,18 +20,20 @@ interface RegistrationCredentials {
   password: string;
 }
 
-interface AuthFormProps {
+interface IProps {
   onSuccess?: () => void;
 }
 
-export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
+export const AuthForm: React.FC<IProps> = ({ onSuccess }) => {
   const [resetToken, setResetToken] = useState("");
   const [mode, setMode] = useState<typeMode>("login");
   const [error, setError] = useState<string | null>(null);
+
   const [registrationCredentials, setRegistrationCredentials] =
     useState<RegistrationCredentials | null>(null);
   const [isCompletingRegistration, setIsCompletingRegistration] =
     useState(false);
+
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
 

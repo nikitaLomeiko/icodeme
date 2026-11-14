@@ -1,13 +1,13 @@
 import React from "react";
 import { useCarouselContext } from "../hooks";
 
-interface CarouselDotsProps {
+interface IProps {
   className?: string;
   dotClassName?: string;
   activeDotClassName?: string;
 }
 
-export const CarouselDots: React.FC<CarouselDotsProps> = ({
+export const CarouselDots: React.FC<IProps> = ({
   className = "",
   dotClassName = "w-2 h-2 rounded-full bg-white/50",
   activeDotClassName = "bg-white w-4",

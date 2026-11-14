@@ -1,6 +1,6 @@
 import { StepType } from "../types";
 
-export const StepPage: Record<StepType, string> = {
+export const stepPageRoutes: Record<StepType, string> = {
   document: "/documentation",
   code: "/code",
   terminal: "/terminal",

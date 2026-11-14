@@ -25,7 +25,7 @@ export const Rating: React.FC<IProps> = (props) => {
           #{globalRank}
         </div>
       </div>
-        <div className="text-sm font-medium text-[var(--ui-text-secondary)]">
+      <div className="text-sm font-medium text-[var(--ui-text-secondary)]">
         из {totalUser.toLocaleString()} пользователей
       </div>
     </div>

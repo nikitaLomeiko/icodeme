@@ -124,7 +124,12 @@ export const StepIllustration: React.FC<IProps> = ({ type }) => {
               stroke={color}
               strokeWidth="2"
             />
-            <path d="M48 54h224" stroke={color} strokeWidth="2" opacity="0.55" />
+            <path
+              d="M48 54h224"
+              stroke={color}
+              strokeWidth="2"
+              opacity="0.55"
+            />
             <circle cx="66" cy="41" r="4" fill={color} />
             <circle cx="80" cy="41" r="4" fill={color} opacity="0.55" />
             <circle cx="94" cy="41" r="4" fill={color} opacity="0.3" />
@@ -135,7 +140,15 @@ export const StepIllustration: React.FC<IProps> = ({ type }) => {
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <rect x="224" y="105" width="8" height="18" rx="2" fill={color} opacity="0.8" />
+            <rect
+              x="224"
+              y="105"
+              width="8"
+              height="18"
+              rx="2"
+              fill={color}
+              opacity="0.8"
+            />
           </>
         )}
 

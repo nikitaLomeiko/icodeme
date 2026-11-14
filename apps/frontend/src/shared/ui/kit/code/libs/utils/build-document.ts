@@ -1,10 +1,10 @@
 import { FileNode } from "../../types/types";
 
-const HTML_EXTENSION = ".html";
-const CSS_EXTENSION = ".css";
-const JS_EXTENSIONS = [".js", ".mjs"];
+const htmlExtension = ".html";
+const cssExtension = ".css";
+const jsExtensions = [".js", ".mjs"];
 
-const EMPTY_DOCUMENT =
+const emptyDocument =
   "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n</body>\n</html>";
 
 const normalizeName = (name: string) => name.toLowerCase();
@@ -24,13 +24,13 @@ const flattenFiles = (nodes: FileNode[]): FileNode[] => {
 };
 
 export const isHtmlFile = (file: FileNode) =>
-  normalizeName(file.name).endsWith(HTML_EXTENSION);
+  normalizeName(file.name).endsWith(htmlExtension);
 
 export const isCssFile = (file: FileNode) =>
-  normalizeName(file.name).endsWith(CSS_EXTENSION);
+  normalizeName(file.name).endsWith(cssExtension);
 
 export const isJsFile = (file: FileNode) =>
-  JS_EXTENSIONS.some((extension) =>
+  jsExtensions.some((extension) =>
     normalizeName(file.name).endsWith(extension),
   );
 
@@ -45,7 +45,7 @@ const isLocalReference = (value: string) =>
 
 export const findMainHtmlFile = (files: FileNode[]): FileNode | undefined => {
   const htmlFiles = flattenFiles(files).filter(isHtmlFile);
-  const indexFile = `index${HTML_EXTENSION}`;
+  const indexFile = `index${htmlExtension}`;
 
   return (
     htmlFiles.find((file) => normalizeName(file.name) === indexFile) ||
@@ -75,7 +75,7 @@ export const buildPreviewDocument = (files: FileNode[]): string | null => {
   const cssNames = new Set(cssFiles.map((file) => normalizeName(file.name)));
   const jsNames = new Set(jsFiles.map((file) => normalizeName(file.name)));
 
-  let document = mainFile.content?.trim() ? mainFile.content : EMPTY_DOCUMENT;
+  let document = mainFile.content?.trim() ? mainFile.content : emptyDocument;
 
   document = document.replace(/<link\b[^>]*>/gi, (tag) => {
     const rel = getAttribute(tag, "rel");
@@ -88,16 +88,13 @@ export const buildPreviewDocument = (files: FileNode[]): string | null => {
     return cssNames.has(getFileName(href)) ? "" : tag;
   });
 
-  document = document.replace(
-    /<script\b[^>]*>[\s\S]*?<\/script>/gi,
-    (tag) => {
-      const src = getAttribute(tag, "src");
+  document = document.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, (tag) => {
+    const src = getAttribute(tag, "src");
 
-      if (!src || !isLocalReference(src)) return tag;
+    if (!src || !isLocalReference(src)) return tag;
 
-      return jsNames.has(getFileName(src)) ? "" : tag;
-    },
-  );
+    return jsNames.has(getFileName(src)) ? "" : tag;
+  });
 
   if (styles) {
     const styleTag = `<style data-icodeme-preview>${styles}</style>`;

@@ -1,11 +1,11 @@
-import { AchievementsData, useGetProfileQuery } from "@/entities/profile";
+import { achievementsData, useGetProfileQuery } from "@/entities/profile";
 import { useGetMyStudyQuery } from "@/entities/study";
 import { AchievementCarousel } from "@/widgets/achievement-view";
 import { AboutView, ProfileView } from "@/widgets/profile-view";
 import { StudyList } from "@/widgets/study-view";
 import { useRouter } from "next/navigation";
 
-export const ProfilePage = () => {
+export const ProfilePage: React.FC = () => {
   const router = useRouter();
   const { data: profile } = useGetProfileQuery(null);
   const { data: study } = useGetMyStudyQuery(null);
@@ -29,7 +29,7 @@ export const ProfilePage = () => {
         <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           <AboutView profileData={profile.data.data} />
           <AchievementCarousel
-            achievements={AchievementsData.map((item) => ({
+            achievements={achievementsData.map((item) => ({
               ...item,
               isLocked: !profile.data?.achievements?.some(
                 (ach) => ach.id === item.id,

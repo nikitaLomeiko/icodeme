@@ -4,19 +4,22 @@ import type { ComponentPropsWithoutRef } from "react";
 import { useRouter } from "next/navigation";
 import { FaArrowLeft } from "react-icons/fa";
 
-export function BackButton({
-  className = "",
-  onClick,
-  children,
-  type = "button",
-  "aria-label": ariaLabel = "Назад",
-  ...props
-}: ComponentPropsWithoutRef<"button">) {
+interface IProps extends ComponentPropsWithoutRef<"button"> {}
+
+export const BackButton: React.FC<IProps> = (props) => {
+  const {
+    className = "",
+    onClick,
+    children,
+    type = "button",
+    "aria-label": ariaLabel = "Назад",
+    ...buttonProps
+  } = props;
   const router = useRouter();
 
   return (
     <button
-      {...props}
+      {...buttonProps}
       type={type}
       aria-label={ariaLabel}
       onClick={onClick ?? (() => router.back())}
@@ -26,4 +29,4 @@ export function BackButton({
       {children}
     </button>
   );
-}
+};

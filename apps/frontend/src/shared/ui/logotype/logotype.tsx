@@ -20,15 +20,16 @@ const anims = [
   "logo_anim10.gif",
 ];
 
-const ANIMATION_DURATION_MS = 6000;
+const animationDurationMs = 6000;
 
-export const Logotype: React.FC<IProps> = ({
-  className,
-  isMobile = false,
-  intervalMs = 30000,
-  showSiteName = true,
-  showLogotype = true,
-}) => {
+export const Logotype: React.FC<IProps> = (props) => {
+  const {
+    className,
+    isMobile = false,
+    intervalMs = 30000,
+    showSiteName = true,
+    showLogotype = true,
+  } = props;
   const [anim, setAnim] = useState("logo.gif");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -47,7 +48,7 @@ export const Logotype: React.FC<IProps> = ({
     timeoutRef.current = setTimeout(() => {
       setAnim("logo.gif");
       isAnimatingRef.current = false;
-    }, ANIMATION_DURATION_MS);
+    }, animationDurationMs);
   };
 
   const clearAllTimers = () => {

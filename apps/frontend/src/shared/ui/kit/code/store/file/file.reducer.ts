@@ -1,4 +1,4 @@
-import { generateId } from "@/shared/lib/utils/generate-id";
+import { generateId } from "@/shared/lib";
 import { FileAction, FileNode } from "./types";
 
 export function initFileSystem(initialNode: FileNode[] = []): FileNode[] {
@@ -25,24 +25,53 @@ export function getAllFiles(nodes: FileNode[]): FileNode[] {
   return result;
 }
 
-function findNode(nodes: FileNode[], id: string): FileNode | null {
+export function getFirstFile(nodes: FileNode[]): FileNode | undefined {
+  for (const node of nodes) {
+    if (node.type === "file") return node;
+    const nested = getFirstFile(node.children);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
+export function findNodeById(
+  nodes: FileNode[],
+  id: string | null,
+): FileNode | undefined {
+  if (!id) return undefined;
   for (const node of nodes) {
     if (node.id === id) return node;
     if (node.children) {
-      const found = findNode(node.children, id);
+      const found = findNodeById(node.children, id);
       if (found) return found;
     }
   }
-  return null;
+  return undefined;
 }
 
 function removeNode(nodes: FileNode[], id: string): FileNode[] {
-  return nodes
-    .filter((n) => n.id !== id)
-    .map((n) => ({
-      ...n,
-      children: n.type === "folder" ? removeNode(n.children, id) : n.children,
-    }));
+  let changed = false;
+  const next: FileNode[] = [];
+
+  for (const node of nodes) {
+    if (node.id === id) {
+      changed = true;
+      continue;
+    }
+
+    if (node.type === "folder") {
+      const children = removeNode(node.children, id);
+      if (children !== node.children) {
+        changed = true;
+        next.push({ ...node, children });
+        continue;
+      }
+    }
+
+    next.push(node);
+  }
+
+  return changed ? next : nodes;
 }
 
 function addToFolder(
@@ -50,25 +79,48 @@ function addToFolder(
   parentId: string,
   newNode: FileNode,
 ): FileNode[] {
-  return nodes.map((n) => {
-    if (n.id === parentId && n.type === "folder") {
-      return { ...n, children: [...n.children, newNode] };
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
+    if (node.id === parentId && node.type === "folder") {
+      const next = nodes.slice();
+      next[index] = { ...node, children: [...node.children, newNode] };
+      return next;
     }
-    if (n.children) {
-      return { ...n, children: addToFolder(n.children, parentId, newNode) };
+
+    if (node.type === "folder") {
+      const children = addToFolder(node.children, parentId, newNode);
+      if (children !== node.children) {
+        const next = nodes.slice();
+        next[index] = { ...node, children };
+        return next;
+      }
     }
-    return n;
-  });
+  }
+
+  return nodes;
 }
 
 function renameNode(nodes: FileNode[], id: string, name: string): FileNode[] {
-  return nodes.map((n) => {
-    if (n.id === id) return { ...n, name };
-    if (n.children) {
-      return { ...n, children: renameNode(n.children, id, name) };
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
+    if (node.id === id) {
+      if (node.name === name) return nodes;
+      const next = nodes.slice();
+      next[index] = { ...node, name };
+      return next;
     }
-    return n;
-  });
+
+    if (node.type === "folder") {
+      const children = renameNode(node.children, id, name);
+      if (children !== node.children) {
+        const next = nodes.slice();
+        next[index] = { ...node, children };
+        return next;
+      }
+    }
+  }
+
+  return nodes;
 }
 
 function updateContent(
@@ -76,13 +128,26 @@ function updateContent(
   id: string,
   content: string,
 ): FileNode[] {
-  return nodes.map((n) => {
-    if (n.id === id) return { ...n, content };
-    if (n.children) {
-      return { ...n, children: updateContent(n.children, id, content) };
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index];
+    if (node.id === id) {
+      if (node.content === content) return nodes;
+      const next = nodes.slice();
+      next[index] = { ...node, content };
+      return next;
     }
-    return n;
-  });
+
+    if (node.type === "folder") {
+      const children = updateContent(node.children, id, content);
+      if (children !== node.children) {
+        const next = nodes.slice();
+        next[index] = { ...node, children };
+        return next;
+      }
+    }
+  }
+
+  return nodes;
 }
 
 function moveNode(
@@ -90,7 +155,7 @@ function moveNode(
   id: string,
   targetParentId: string,
 ): FileNode[] {
-  const nodeToMove = findNode(nodes, id);
+  const nodeToMove = findNodeById(nodes, id);
   if (!nodeToMove) return nodes;
 
   const withoutSource = removeNode(nodes, id);
@@ -109,7 +174,7 @@ function ensurePath(
   let result = nodes;
 
   for (const part of parts) {
-    const parent = findNode(result, currentId);
+    const parent = findNodeById(result, currentId);
     if (!parent || parent.type !== "folder") return [result, ""];
 
     let folder = parent.children.find(
@@ -135,7 +200,7 @@ export function fileReducer(state: FileNode[], action: FileAction): FileNode[] {
   switch (action.type) {
     case "CREATE_FILE": {
       const newNode: FileNode = {
-        id: generateId(),
+        id: action.id ?? generateId(),
         name: action.name,
         type: "file",
         content: "",

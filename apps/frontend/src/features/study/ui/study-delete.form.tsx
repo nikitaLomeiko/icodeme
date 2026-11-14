@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TextField, Button, Title, Notification } from "@/shared/ui/kit";
-import { generateCode } from "../model/heplers";
+import { generateCode } from "../model/helpers";
 import { useDeleteStudyMutation } from "@/entities/study";
 
 interface IProps {
@@ -14,15 +14,10 @@ export const StudyDeleteForm: React.FC<IProps> = (props) => {
   const { onCancel, id } = props;
 
   const [userInput, setUserInput] = useState("");
-  const [randomChars, setRandomChars] = useState("");
+  const [randomChars] = useState(generateCode);
 
   const [remove, { isLoading }] = useDeleteStudyMutation();
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setRandomChars(generateCode());
-    setUserInput("");
-  }, []);
 
   const handleConfirm = async () => {
     setError(null);
@@ -41,7 +36,6 @@ export const StudyDeleteForm: React.FC<IProps> = (props) => {
 
   const handleClose = () => {
     setUserInput("");
-    setRandomChars("");
     onCancel();
   };
 

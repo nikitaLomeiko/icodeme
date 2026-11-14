@@ -1,5 +1,11 @@
-import { IProjectMeta } from "@/entities/ide/model/types/ide.types";
 import { IQuiz } from "./quiz.types";
+
+export interface IStudyProjectMeta {
+  name: string;
+  title: string;
+  subtitle: string;
+  language: string;
+}
 
 export interface IStudy extends INotation {
   _id: string;
@@ -56,7 +62,7 @@ export interface IStep extends INotation {
 
 export interface ISettings {
   language?: string;
-  initProject?: IProjectMeta;
+  initProject?: IStudyProjectMeta;
   entryFile?: string;
   timeLimitMs?: number;
   memoryLimitMb?: number;

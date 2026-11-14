@@ -8,7 +8,7 @@ import {
   selectSelectedStep,
   selectSelectedStepIndex,
 } from "@/entities/study";
-import { useAppSelector } from "@/shared/lib/hooks";
+import { useAppSelector } from "@/shared/lib";
 import { Button, ProgressBar } from "@/shared/ui/kit";
 import { motion } from "framer-motion";
 import { StepIllustration } from "./step.illustration";
@@ -39,7 +39,10 @@ export const SideBar: React.FC<IProps> = (props) => {
     currentLevel?.steps.filter((step) => step.isCompleted).length ?? 0;
 
   return (
-    <aside data-study-sidebar className="lg:flex hidden fixed right-4 top-4 bottom-4 z-40 w-[400px] flex-col gap-4 overflow-y-auto pr-1">
+    <aside
+      data-study-sidebar
+      className="lg:flex hidden fixed right-4 top-4 bottom-4 z-40 w-[400px] flex-col gap-4 overflow-y-auto pr-1"
+    >
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}

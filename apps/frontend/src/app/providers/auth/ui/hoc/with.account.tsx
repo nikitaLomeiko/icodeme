@@ -1,16 +1,18 @@
 "use client";
 
 import { isApiError } from "@/shared/api";
-import { useEffect, useRef } from "react";
+import { createElement, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader, useNotification } from "@/shared/ui/kit";
 import { useGetProfileQuery } from "@/entities/profile";
 
-export function withAccount<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
+export const withAccount = <P extends object>(
+  wrappedComponent: React.ComponentType<P>,
   redirectTo = "/auth/profile",
-) {
-  return function AuthenticatedComponent(props: P) {
+) => {
+  type IProps = P;
+
+  const AuthenticatedComponent: React.FC<IProps> = (props) => {
     const router = useRouter();
     const notification = useNotification();
     const hasWarnedRef = useRef(false);
@@ -39,7 +41,7 @@ export function withAccount<P extends object>(
         </div>
       );
 
-    if (!isLoading && !isError) return <WrappedComponent {...props} />;
+    if (!isLoading && !isError) return createElement(wrappedComponent, props);
 
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -47,4 +49,6 @@ export function withAccount<P extends object>(
       </div>
     );
   };
-}
+
+  return AuthenticatedComponent;
+};

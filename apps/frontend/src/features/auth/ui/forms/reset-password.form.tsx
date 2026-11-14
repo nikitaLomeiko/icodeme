@@ -10,12 +10,18 @@ import {
   resetPasswordSchema,
 } from "../../model/validate/auth.schema";
 import { selectUserId, useResetPasswordMutation } from "@/entities/auth";
-import { useAppSelector } from "@/shared/lib/hooks";
+import { useAppSelector } from "@/shared/lib";
 import { isApiError } from "@/shared/api";
 
-export const ResetPasswordForm: React.FC<
-  IBaseFormProps & { resetToken: string }
-> = ({ resetToken, setError, onSuccess }) => {
+interface IProps extends IBaseFormProps {
+  resetToken: string;
+}
+
+export const ResetPasswordForm: React.FC<IProps> = ({
+  resetToken,
+  setError,
+  onSuccess,
+}) => {
   const {
     register,
     handleSubmit,

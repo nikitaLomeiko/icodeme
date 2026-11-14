@@ -13,7 +13,8 @@ export default () => {
       port,
       // Port 465 uses implicit TLS; port 587 starts with a plaintext
       // connection and upgrades to TLS via STARTTLS.
-      secure: secureSetting === undefined ? port === 465 : secureSetting === 'true',
+      secure:
+        secureSetting === undefined ? port === 465 : secureSetting === 'true',
       user: emailUser,
       password: process.env.EMAIL_PASSWORD || '',
       from: process.env.EMAIL_FROM || '',

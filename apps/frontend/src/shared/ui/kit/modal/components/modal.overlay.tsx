@@ -7,7 +7,7 @@ import {
 } from "../styles";
 import { ModalVariant } from "../types";
 
-export const ModalOverlay: React.FC<{
+interface IProps {
   variant: ModalVariant;
   isVisible: boolean;
   onClose: () => void;
@@ -15,15 +15,18 @@ export const ModalOverlay: React.FC<{
   blurBackground?: boolean;
   className?: string;
   zIndex?: number;
-}> = ({
-  variant,
-  isVisible,
-  onClose,
-  closeOnOverlayClick,
-  blurBackground = false,
-  className,
-  zIndex = 50,
-}) => {
+}
+
+export const ModalOverlay: React.FC<IProps> = (props) => {
+  const {
+    variant,
+    isVisible,
+    onClose,
+    closeOnOverlayClick,
+    blurBackground = false,
+    className,
+    zIndex = 50,
+  } = props;
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();

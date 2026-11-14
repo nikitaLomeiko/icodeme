@@ -7,6 +7,14 @@ import {
 } from "../styles";
 import { ModalPosition } from "../types";
 
+interface IProps {
+  position: ModalPosition;
+  isVisible: boolean;
+  children: ReactNode;
+  className?: string;
+  zIndex?: number;
+}
+
 const getPositionAnimation = (isVisible: boolean, position: ModalPosition) => {
   if (!isVisible) {
     switch (position) {
@@ -29,30 +37,28 @@ const getPositionAnimation = (isVisible: boolean, position: ModalPosition) => {
   return "translate-y-0 translate-x-0 scale-100 opacity-100";
 };
 
-export const ModalContainer: React.FC<{
-  position: ModalPosition;
-  isVisible: boolean;
-  children: ReactNode;
-  className?: string;
-  zIndex?: number;
-}> = ({ position, isVisible, children, className, zIndex = 50 }) => (
-  <div
-    className={`
+export const ModalContainer: React.FC<IProps> = (props) => {
+  const { position, isVisible, children, className, zIndex = 50 } = props;
+
+  return (
+    <div
+      className={`
       fixed inset-0 z-90
       flex ${positionStyles[position]}
       pointer-events-none
       ${className || ""}
     `}
-  >
-    <div
-      className={`
+    >
+      <div
+        className={`
         w-full
         pointer-events-auto
         transition-all duration-300 ease-out
         ${getPositionAnimation(isVisible, position)}
     `}
-    >
-      {children}
+      >
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};

@@ -52,8 +52,7 @@ const syncCurrentStudy = (state: IStudyState) => {
     state.currentModule?.levels[state.currentLevelIndex] ?? null;
   state.currentStepIndex =
     state.currentLevel?.steps.findIndex((step) => step.isCurrent) ?? -1;
-  state.currentStep =
-    state.currentLevel?.steps[state.currentStepIndex] ?? null;
+  state.currentStep = state.currentLevel?.steps[state.currentStepIndex] ?? null;
 
   state.selectedStep =
     state.viewedModule?.levels[state.selectedLevelIndex]?.steps[

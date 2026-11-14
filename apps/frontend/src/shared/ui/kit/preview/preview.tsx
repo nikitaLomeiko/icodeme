@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { PREVIEW_DEVICE_WIDTHS } from "./consts";
+import { previewDeviceWidths } from "./consts";
 import { IPreviewProps, PreviewDevice } from "./types";
 import { PreviewFrame, PreviewHeader } from "./ui";
 
-const UPDATE_DELAY = 300;
+const updateDelay = 300;
 
-export const Preview: React.FC<IPreviewProps> = (props) => {
+interface IProps extends IPreviewProps {}
+
+export const Preview: React.FC<IProps> = (props) => {
   const {
     document,
     address = "index.html",
@@ -22,7 +24,7 @@ export const Preview: React.FC<IPreviewProps> = (props) => {
   const [frameDocument, setFrameDocument] = useState(document);
 
   useEffect(() => {
-    const timer = setTimeout(() => setFrameDocument(document), UPDATE_DELAY);
+    const timer = setTimeout(() => setFrameDocument(document), updateDelay);
 
     return () => clearTimeout(timer);
   }, [document]);
@@ -50,7 +52,7 @@ export const Preview: React.FC<IPreviewProps> = (props) => {
         <div
           key={reloadKey}
           className="h-full w-full transition-all duration-300 ease-in-out"
-          style={{ maxWidth: PREVIEW_DEVICE_WIDTHS[device] }}
+          style={{ maxWidth: previewDeviceWidths[device] }}
         >
           <PreviewFrame document={frameDocument} />
         </div>

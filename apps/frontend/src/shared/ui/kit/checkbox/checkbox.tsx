@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { FaCheck } from "react-icons/fa";
 
-interface CheckboxProps {
+interface IProps {
   id: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -15,16 +15,17 @@ interface CheckboxProps {
   className?: string;
 }
 
-export const Checkbox: React.FC<CheckboxProps> = ({
-  id,
-  checked,
-  onChange,
-  label,
-  disabled = false,
-  error,
-  required = false,
-  className = "",
-}) => {
+export const Checkbox: React.FC<IProps> = (props) => {
+  const {
+    id,
+    checked,
+    onChange,
+    label,
+    disabled = false,
+    error,
+    required = false,
+    className = "",
+  } = props;
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       <div className="flex items-center gap-2">

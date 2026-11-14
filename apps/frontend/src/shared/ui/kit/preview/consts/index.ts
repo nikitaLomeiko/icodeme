@@ -2,7 +2,7 @@ import { IconType } from "react-icons";
 import { FiMonitor, FiSmartphone, FiTablet } from "react-icons/fi";
 import { PreviewDevice } from "../types";
 
-export const PREVIEW_DEVICES: {
+export const previewDevices: {
   id: PreviewDevice;
   title: string;
   icon: IconType;
@@ -12,7 +12,7 @@ export const PREVIEW_DEVICES: {
   { id: "mobile", title: "Mobile", icon: FiSmartphone },
 ];
 
-export const PREVIEW_DEVICE_WIDTHS: Record<PreviewDevice, string> = {
+export const previewDeviceWidths: Record<PreviewDevice, string> = {
   desktop: "100%",
   tablet: "768px",
   mobile: "375px",

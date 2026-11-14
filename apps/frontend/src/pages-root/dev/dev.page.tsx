@@ -1,9 +1,9 @@
 "use client";
-import { IDE } from "@/entities/ide";
+import { IdeWidget } from "@/widgets/ide";
 
-export const DevPage = () => {
+export const DevPage: React.FC = () => {
   return (
-    <IDE
+    <IdeWidget
       userId="4"
       stepId="dev"
       meta={{

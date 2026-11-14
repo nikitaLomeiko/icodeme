@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { createElement, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/shared/lib/hooks";
+import { useAppSelector } from "@/shared/lib";
 import { selectIsAuthenticated } from "@/entities/auth";
 import { Loader, useNotification } from "@/shared/ui/kit";
 
-export function withAuth<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
+export const withAuth = <P extends object>(
+  wrappedComponent: React.ComponentType<P>,
   redirectTo = "/auth",
-) {
-  return function AuthenticatedComponent(props: P) {
+) => {
+  type IProps = P;
+
+  const AuthenticatedComponent: React.FC<IProps> = (props) => {
     const router = useRouter();
     const isAuth = useAppSelector(selectIsAuthenticated);
     const notification = useNotification();
@@ -23,7 +25,7 @@ export function withAuth<P extends object>(
     }, [isAuth, router]);
 
     if (isAuth === true) {
-      return <WrappedComponent {...props} />;
+      return createElement(wrappedComponent, props);
     }
 
     return (
@@ -32,4 +34,6 @@ export function withAuth<P extends object>(
       </div>
     );
   };
-}
+
+  return AuthenticatedComponent;
+};

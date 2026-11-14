@@ -3,7 +3,6 @@ import {
   IAuthResponse,
   ILoginParams,
   IConfirmCodeParams,
-  IOAuthResponse,
   IRegisterParams,
   IUserIdResponse,
   IResetPasswordParams,
@@ -61,32 +60,16 @@ export const authApi = createApi({
         url: "auth/verify-token",
       }),
     }),
-    oauth: build.query<IResponse<string>, string>({
-      query: (endpoint) => ({
-        url: endpoint,
-        method: "GET",
-      }),
-    }),
-    telegramVerifiy: build.mutation<IResponse<IOAuthResponse>, string>({
-      query: (params) => ({
-        url: "oauth/telegram/verify",
-        method: "POST",
-        body: JSON.parse(params),
-      }),
-    }),
   }),
 });
 
 export const {
-  useOauthQuery,
   useLoginMutation,
   useLogoutMutation,
-  useLazyOauthQuery,
   useRegisterMutation,
   useVerifyTokenQuery,
   useConfirmCodeMutation,
   useLazyVerifyTokenQuery,
   useResetPasswordMutation,
   useSendConfirmCodeMutation,
-  useTelegramVerifiyMutation,
 } = authApi;

@@ -14,26 +14,29 @@ import {
 } from "./styles/progress-bar.styles";
 import { Segment } from "./components/segment";
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({
-  value,
-  max = 100,
-  variant = "default",
-  state = "default",
-  size = "md",
-  trackVariant = "solid",
-  showValue = false,
-  label,
-  labelPosition = "inside-center",
-  duration = 500,
-  delay = 0,
-  indicatorColor,
-  trackColor,
-  minWidth = 0,
-  segments,
-  segmentGap = 2,
-  className = "",
-  ...props
-}) => {
+interface IProps extends ProgressBarProps {}
+
+export const ProgressBar: React.FC<IProps> = (props) => {
+  const {
+    value,
+    max = 100,
+    variant = "default",
+    state = "default",
+    size = "md",
+    trackVariant = "solid",
+    showValue = false,
+    label,
+    labelPosition = "inside-center",
+    duration = 500,
+    delay = 0,
+    indicatorColor,
+    trackColor,
+    minWidth = 0,
+    segments,
+    segmentGap = 2,
+    className = "",
+    ...containerProps
+  } = props;
   const controls = useAnimation();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -73,7 +76,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     : undefined;
 
   return (
-    <div className={`w-full ${className}`} {...props}>
+    <div className={`w-full ${className}`} {...containerProps}>
       {labelPosition?.includes("top") && (
         <div
           className={`${textStyles.top} flex ${labelPositionStyles[labelPosition]}`}

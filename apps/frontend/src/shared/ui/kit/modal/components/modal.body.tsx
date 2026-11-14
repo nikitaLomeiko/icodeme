@@ -1,8 +1,10 @@
 import { ReactNode } from "react";
 
-export const ModalBody: React.FC<{
+interface IProps {
   children: ReactNode;
   className?: string;
-}> = ({ children, className }) => (
+}
+
+export const ModalBody: React.FC<IProps> = ({ children, className }) => (
   <div className={`px-6 py-4 ${className || ""}`}>{children}</div>
 );

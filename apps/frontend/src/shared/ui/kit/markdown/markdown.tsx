@@ -115,7 +115,7 @@ export const Markdown: React.FC<IProps> = memo((props) => {
               <CopyButton code={codeString} />
             </div>
             <SyntaxHighlighter
-              // @ts-ignore
+              // @ts-expect-error react-syntax-highlighter style typings are narrower than the bundled theme.
               style={vscDarkPlus}
               language={language}
               PreTag="div"
@@ -324,3 +324,5 @@ export const Markdown: React.FC<IProps> = memo((props) => {
     </div>
   );
 });
+
+Markdown.displayName = "Markdown";

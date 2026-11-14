@@ -1,1 +1,1 @@
-export { PageLoading as default } from "@/widgets/layout/ui/page-loading";
+export { PageLoading as default } from "@/shared/ui/kit";

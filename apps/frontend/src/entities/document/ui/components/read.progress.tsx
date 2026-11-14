@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { documentOptionStore } from "../../model";
 import { ProgressBar } from "@/shared/ui/kit";
 
-export const ReadProgrss = () => {
+export const ReadProgress: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const { contentRef, content } = documentOptionStore;

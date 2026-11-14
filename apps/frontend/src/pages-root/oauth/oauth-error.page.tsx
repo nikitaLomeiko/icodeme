@@ -3,7 +3,7 @@
 import { Button, Notification } from "@/shared/ui/kit";
 import { useRouter } from "next/navigation";
 
-export const OAuthErrorPage = () => {
+export const OAuthErrorPage: React.FC = () => {
   const router = useRouter();
 
   return (

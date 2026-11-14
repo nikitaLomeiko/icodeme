@@ -2,12 +2,15 @@ import { FiX } from "react-icons/fi";
 import { Title } from "../../title";
 import { ModalVariant } from "../types";
 
-export const ModalHeader: React.FC<{
+interface IProps {
   title?: string;
   showCloseButton: boolean;
   onClose: () => void;
   variant: ModalVariant;
-}> = ({ title, showCloseButton, onClose, variant }) => {
+}
+
+export const ModalHeader: React.FC<IProps> = (props) => {
+  const { title, showCloseButton, onClose, variant } = props;
   if (!title && !showCloseButton) return null;
 
   const isTransparent = variant === "transparent";

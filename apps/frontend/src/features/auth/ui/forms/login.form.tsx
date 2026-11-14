@@ -13,16 +13,16 @@ import {
 import { FaEnvelope } from "react-icons/fa";
 import { IBaseFormProps } from "../../model/types/form.props";
 import { LoginFormData, loginSchema } from "../../model/validate/auth.schema";
-import { useAppDispatch } from "@/shared/lib/hooks";
-import { setAuthData } from "@/entities/auth/model";
+import { useAppDispatch } from "@/shared/lib";
+import { setAuthData } from "@/entities/auth";
 import { useLoginMutation } from "@/entities/auth";
 import { isApiError } from "@/shared/api";
 
-interface LoginFormProps extends IBaseFormProps {
+interface IProps extends IBaseFormProps {
   onForgotClick: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({
+export const LoginForm: React.FC<IProps> = ({
   onForgotClick,
   onSuccess,
   setError,
