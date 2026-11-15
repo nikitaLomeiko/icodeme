@@ -59,10 +59,15 @@ export const Step: React.FC<IProps> = (props) => {
     );
   };
 
-  const containerStyle: React.CSSProperties = {
-    left: `${pos.x}%`,
+  const containerStyle: React.CSSProperties & {
+    "--step-x": string;
+    "--step-width": string;
+  } = {
+    left: `max(0px, min(var(--step-x), calc(100% - var(--step-width) - 8px)))`,
     top: pos.y,
     zIndex: isCurrent ? 4 : 2,
+    "--step-x": `${pos.x}%`,
+    "--step-width": "100px",
   };
 
   const cardStyle = getCardStyle(isCompleted, isCurrent, palette);
@@ -81,7 +86,7 @@ export const Step: React.FC<IProps> = (props) => {
       onPointerEnter={updateTooltipSide}
       onFocusCapture={updateTooltipSide}
       className={`
-        absolute group h-[100px] w-[100px] transition-transform duration-300 2xl:h-[150px] 2xl:w-[150px]
+        absolute group h-[100px] w-[100px] transition-transform duration-300 2xl:h-[150px] 2xl:w-[150px] 2xl:[--step-width:150px]
         ${
           isLocked
             ? "pointer-events-none cursor-default opacity-55 grayscale"

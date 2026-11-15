@@ -44,8 +44,8 @@ export const Level: React.FC<IProps> = (props) => {
           ${isLocked ? "opacity-70 grayscale-[35%]" : ""}
         `}
       >
-        <div className="relative flex items-center gap-4 rounded-2xl px-6 py-4">
-          <div className="relative shrink-0">
+        <div className="relative grid grid-cols-[44px_minmax(0,1fr)] items-start gap-x-3 gap-y-2 rounded-2xl px-3 py-3 sm:flex sm:items-center sm:gap-4 sm:px-6 sm:py-4">
+          <div className="relative row-span-2 shrink-0 sm:row-span-1">
             {isCurrent && (
               <span
                 aria-hidden
@@ -76,10 +76,10 @@ export const Level: React.FC<IProps> = (props) => {
             </span>
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 sm:flex-1">
             <h3
               className={`
-                text-2xl font-bold leading-tight
+                text-xl font-bold leading-tight sm:text-2xl
                 transition-colors duration-300
                 ${
                   isCurrent
@@ -100,9 +100,7 @@ export const Level: React.FC<IProps> = (props) => {
             </p>
           </div>
 
-          <div className="flex-1" />
-
-          <div className="flex items-center gap-2">
+          <div className="col-start-2 flex flex-wrap items-center justify-start gap-2 sm:ml-auto sm:justify-end">
             {isCurrent && (
               <span
                 className="

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   selectCurrentPlan,
@@ -18,6 +18,7 @@ import { StudyNav } from "./study.nav";
 import { WorkZone } from "./work-zone";
 
 export const StudyHome: React.FC = () => {
+  const [isMobileStepSheetOpen, setMobileStepSheetOpen] = useState(false);
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
 
@@ -48,6 +49,8 @@ export const StudyHome: React.FC = () => {
         isLoading={isLoading}
         isError={isError || data?.success === false}
         study={selectedStudy ?? undefined}
+        isMobileStepSheetOpen={isMobileStepSheetOpen}
+        onCloseMobileStepSheet={() => setMobileStepSheetOpen(false)}
       >
         {activeModule && (
           <StudyModuleMap
@@ -55,6 +58,7 @@ export const StudyHome: React.FC = () => {
             moduleIndex={activeModuleIndex}
             onSelectStep={(levelIndex, stepIndex) => {
               dispatch(selectStudyStep({ levelIndex, stepIndex }));
+              setMobileStepSheetOpen(true);
             }}
           />
         )}

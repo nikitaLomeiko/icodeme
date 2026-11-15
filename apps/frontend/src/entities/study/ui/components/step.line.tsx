@@ -8,6 +8,7 @@ interface IProps {
 export const StepLine: React.FC<IProps> = ({ steps }) => {
   const containerRef = useRef<SVGSVGElement | null>(null);
   const [width, setWidth] = useState(0);
+  const [stepSize, setStepSize] = useState(100);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -16,7 +17,10 @@ export const StepLine: React.FC<IProps> = ({ steps }) => {
     const parent = el.parentElement;
     if (!parent) return;
 
-    const update = () => setWidth(parent.clientWidth);
+    const update = () => {
+      setWidth(parent.clientWidth);
+      setStepSize(window.innerWidth >= 1536 ? 150 : 100);
+    };
 
     update();
 
@@ -38,10 +42,11 @@ export const StepLine: React.FC<IProps> = ({ steps }) => {
 
   const points = steps.map((step, index) => {
     const pos = getStepPosition(step.position, index);
-    const xPx = (pos.x / 100) * width;
+    const maxX = Math.max(0, width - stepSize - 8);
+    const xPx = Math.min(Math.max(0, (pos.x / 100) * width), maxX);
     return {
-      x: xPx + 60,
-      y: pos.y + 60,
+      x: xPx + stepSize / 2,
+      y: pos.y + stepSize / 2,
     };
   });
 

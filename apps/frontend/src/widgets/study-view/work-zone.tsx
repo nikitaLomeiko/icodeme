@@ -14,7 +14,8 @@ import {
 import { ActionsBar } from "./components/actions.bar";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/shared/lib";
-import { PageLoading } from "@/shared/ui/kit";
+import { BottomSheet, Button, PageLoading } from "@/shared/ui/kit";
+import { StepIllustration } from "./components/step.illustration";
 
 interface IProps {
   children: React.ReactNode;
@@ -23,6 +24,8 @@ interface IProps {
   smoothWheelScroll?: boolean;
   study?: IStudy;
   showCurrentStepButton?: boolean;
+  isMobileStepSheetOpen?: boolean;
+  onCloseMobileStepSheet?: () => void;
 }
 
 export const WorkZone: React.FC<IProps> = (props) => {
@@ -32,6 +35,8 @@ export const WorkZone: React.FC<IProps> = (props) => {
     isError,
     study,
     showCurrentStepButton = true,
+    isMobileStepSheetOpen = false,
+    onCloseMobileStepSheet = () => {},
   } = props;
 
   const router = useRouter();
@@ -97,6 +102,50 @@ export const WorkZone: React.FC<IProps> = (props) => {
       />
 
       <SideBar onStartStep={handleStartStep} />
+
+      <div className="lg:hidden">
+        <BottomSheet
+          isOpen={isMobileStepSheetOpen && Boolean(selectedStep)}
+          onClose={onCloseMobileStepSheet}
+          title="Информация о шаге"
+          variant="dark"
+          closeOnOverlayClick
+          closeOnEsc
+          className="lg:hidden"
+          overlayClassName="lg:hidden"
+        >
+          {selectedStep && (
+            <div className="px-5 pb-5">
+              <StepIllustration type={selectedStep.type} />
+              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--ui-primary)]">
+                {levelIndex >= 0 && stepIndex >= 0
+                  ? `Уровень ${levelIndex + 1} · шаг ${stepIndex + 1}`
+                  : "Выбранный шаг"}
+              </div>
+              <h2 className="mt-1 text-xl font-bold text-[var(--ui-text)]">
+                {selectedStep.title}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--ui-text-muted)]">
+                {selectedStep.description}
+              </p>
+              {selectedStep.isCompleted && (
+                <p className="mt-3 text-xs font-semibold text-[var(--ui-primary)]">
+                  Пройдено
+                </p>
+              )}
+              <Button
+                size="lg"
+                fullWidth
+                className="mt-5"
+                disabled={!currentPlan || levelIndex < 0 || stepIndex < 0}
+                onClick={handleStartStep}
+              >
+                Перейти
+              </Button>
+            </div>
+          )}
+        </BottomSheet>
+      </div>
     </div>
   );
 };
