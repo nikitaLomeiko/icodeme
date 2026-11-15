@@ -116,7 +116,7 @@ export class ProfileStorageService {
         $set: { updatedAt: new Date() },
       },
     );
-    if (!updated.matchedCount) {
+    if (!updated.modifiedCount) {
       const storage = await this.collection.findOne({ userId });
       return storage
         ? { success: false, error: ProfileError.DOCUMENT_NOT_FOUND }

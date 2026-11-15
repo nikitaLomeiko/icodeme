@@ -6,6 +6,8 @@ import { QuizPage, QuizProvider } from "@/features/quiz";
 import { StepShell } from "../step-shell";
 import { useStepRouteParams, useStudyStep } from "../lib/hooks";
 import { adaptStudyQuiz } from "../lib/utils";
+import { GenerateStepContent } from "./generate-step-content";
+import { QuizCompletion } from "./quiz-completion";
 
 interface IProps {
   kind: "quiz" | "test" | "exam";
@@ -30,6 +32,12 @@ export const QuizStepView: React.FC<IProps> = ({ kind }) => {
     kind === "quiz"
       ? step?.type === "quiz"
       : step?.type === "test" || step?.type === "exam";
+  if (matches && step && !quiz)
+    return (
+      <StepShell>
+        <GenerateStepContent params={params} kind="quiz" />
+      </StepShell>
+    );
   if (!matches || !quiz || !step)
     return <StepShell message="Тест для этого шага не найден." />;
   if (!quiz.questions.length)
@@ -61,6 +69,7 @@ export const QuizStepView: React.FC<IProps> = ({ kind }) => {
       )}
       <QuizProvider key={stepKey} quiz={quiz}>
         <QuizPage />
+        <QuizCompletion params={params} />
       </QuizProvider>
     </StepShell>
   );

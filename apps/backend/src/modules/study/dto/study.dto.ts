@@ -1,4 +1,11 @@
-import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsObject,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateStudyDto {
   @IsString()
@@ -29,4 +36,9 @@ export class GenerateStepContentDto extends GenerateStepsDto {
   @IsInt()
   @Min(0)
   stepIndex: number;
+}
+
+export class SubmitQuizDto extends GenerateStepContentDto {
+  @IsObject()
+  answers: Record<string, string | string[]>;
 }

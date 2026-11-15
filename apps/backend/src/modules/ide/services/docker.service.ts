@@ -432,6 +432,7 @@ export class DockerService implements OnModuleInit, OnModuleDestroy {
       const container = await this.docker.createContainer({
         Image: imageName,
         name: containerName,
+        User: '10001:10001',
         HostConfig: {
           NetworkMode: 'none',
           CapDrop: ['ALL'],

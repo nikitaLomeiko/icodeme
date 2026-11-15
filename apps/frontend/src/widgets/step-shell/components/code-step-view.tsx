@@ -3,6 +3,7 @@
 import { IdeWidget } from "@/widgets/ide";
 import { StepShell } from "../step-shell";
 import { useStepRouteParams, useStudyStep } from "../lib/hooks";
+import { GenerateStepContent } from "./generate-step-content";
 
 const defaultEntryFiles: Record<string, string> = {
   bash: "main.sh",
@@ -27,6 +28,12 @@ export const CodeStepView: React.FC = () => {
   if (isError || !study)
     return <StepShell message="Не удалось загрузить план обучения." />;
 
+  if (step && (step.type === "code" || step.type === "exam") && !step.code)
+    return (
+      <StepShell>
+        <GenerateStepContent params={params} kind="code" />
+      </StepShell>
+    );
   if (!step || (step.type !== "code" && step.type !== "exam") || !step.code)
     return <StepShell message="Задание для этого шага не найдено." />;
 

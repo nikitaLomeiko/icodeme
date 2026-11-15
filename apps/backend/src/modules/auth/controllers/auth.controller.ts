@@ -12,6 +12,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { generateId } from '@core/helpers/generate-id';
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { AuthError } from '../types';
@@ -85,9 +86,14 @@ export class AuthController {
       data.email,
       purpose,
     );
-    if (!result.success)
-      throw new BadRequestException('Не удалось отправить код');
-    return { ...result, message: 'Код отправлен' };
+    return {
+      success: true,
+      data: {
+        userId:
+          result.data?.userId ?? generateId(data.email.trim().toLowerCase()),
+      },
+      message: 'Если адрес зарегистрирован, код отправлен',
+    };
   }
 
   @Post('reset/password')

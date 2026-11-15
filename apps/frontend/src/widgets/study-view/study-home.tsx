@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from "@/shared/lib";
 import { StudyModuleMap } from "./study-module-map";
 import { StudyNav } from "./study.nav";
 import { WorkZone } from "./work-zone";
+import { StudyGenerationPanel } from "./study-generation-panel";
 
 export const StudyHome: React.FC = () => {
   const searchParams = useSearchParams();
@@ -46,6 +47,12 @@ export const StudyHome: React.FC = () => {
         isError={isError || data?.success === false}
         study={selectedStudy ?? undefined}
       >
+        {selectedStudy && (
+          <StudyGenerationPanel
+            study={selectedStudy}
+            moduleIndex={activeModuleIndex}
+          />
+        )}
         {activeModule && (
           <StudyModuleMap
             module={activeModule}

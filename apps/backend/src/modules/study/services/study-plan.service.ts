@@ -11,16 +11,20 @@ import type {
   GenerateLevelsDto,
   GenerateStepContentDto,
   GenerateStepsDto,
+  SubmitQuizDto,
 } from '../dto/study.dto';
 import { createTestStudyModule } from '../factories/test-study-module.factory';
 import { StudyService } from './study.service';
 import { StudyGenerationService } from './study-generation.service';
+import { runtimeForStudy } from './study-runtime-config';
+import { StudyGenerationQuotaService } from './study-generation-quota.service';
 
 @Injectable()
 export class StudyPlanService {
   constructor(
     private readonly studyService: StudyService,
     private readonly generationService: StudyGenerationService,
+    private readonly quota: StudyGenerationQuotaService,
   ) {}
 
   getStudies(userId: string): Promise<IControllerResponse<IStudy[]>> {
@@ -94,6 +98,7 @@ export class StudyPlanService {
       throw new BadRequestException('Учебный план уже сформирован');
     }
 
+    await this.quota.consume(userId);
     const generated = await this.generationService.generateModules(
       study.study.context,
     );
@@ -113,6 +118,9 @@ export class StudyPlanService {
   ): Promise<IControllerResponse<INotation[]>> {
     const study = await this.getStudy(userId, data.studyId);
     const module = this.getModule(study, data.moduleIndex);
+    if (module.levels.length)
+      throw new BadRequestException('Уровни уже созданы');
+    await this.quota.consume(userId);
     const generated = await this.generationService.generateLevels(
       module,
       study.study.context,
@@ -147,6 +155,8 @@ export class StudyPlanService {
     const study = await this.getStudy(userId, data.studyId);
     const module = this.getModule(study, data.moduleIndex);
     const level = this.getLevel(module, data.levelIndex);
+    if (level.steps.length) throw new BadRequestException('Шаги уже созданы');
+    await this.quota.consume(userId);
     const generated = await this.generationService.generateSteps(
       module,
       level,
@@ -157,13 +167,24 @@ export class StudyPlanService {
       throw new BadRequestException('Не удалось создать шаги');
     }
 
+    const runtime = runtimeForStudy(study.study.context);
+    if (
+      !runtime &&
+      generated.data.some(
+        (step) => step.type === 'code' || step.type === 'exam',
+      )
+    )
+      throw new BadRequestException(
+        'Для языка этого плана пока недоступна среда выполнения',
+      );
     const steps: IStep[] = generated.data.map((step, stepIndex) => ({
       ...step,
       id: randomUUID(),
       isCompleted: false,
       isCurrent: stepIndex === 0,
       position: { x: 50, y: stepIndex * 320 },
-      settings: {},
+      settings:
+        step.type === 'code' || step.type === 'exam' ? { ...runtime } : {},
     }));
     if (
       !(await this.studyService.setStepsIfEmpty(
@@ -199,6 +220,106 @@ export class StudyPlanService {
     return this.generateStepContent(userId, data, 'quiz');
   }
 
+  async submitQuiz(
+    userId: string,
+    data: SubmitQuizDto,
+  ): Promise<
+    IControllerResponse<{ correct: number; total: number; completed: boolean }>
+  > {
+    const study = await this.getStudy(userId, data.studyId);
+    const step = this.getStep(
+      this.getLevel(this.getModule(study, data.moduleIndex), data.levelIndex),
+      data.stepIndex,
+    );
+    if (!['quiz', 'test', 'exam'].includes(step.type))
+      throw new BadRequestException('Шаг не является тестом');
+    const quiz = step.quiz ?? step.exam;
+    if (!quiz?.questions.length)
+      throw new BadRequestException('Тест не найден');
+    if (
+      !data.answers ||
+      typeof data.answers !== 'object' ||
+      Array.isArray(data.answers)
+    )
+      throw new BadRequestException('Некорректные ответы');
+    const answers = data.answers;
+    const normalize = (value: string) => value.trim().toLocaleLowerCase();
+    let correct = 0;
+    let total = 0;
+    quiz.questions.forEach((question, index) => {
+      const answer = answers[`question-${index}`];
+      const validAnswer =
+        typeof answer === 'string' ||
+        (Array.isArray(answer) &&
+          answer.every((part) => typeof part === 'string'));
+      if (question.type === 'abcd') {
+        const expected = (question.variants ?? []).flatMap(
+          (variant, optionIndex) =>
+            variant.isTrue ? [String(optionIndex)] : [],
+        );
+        if (!expected.length) return;
+        total++;
+        if (!validAnswer) return;
+        const actual = Array.isArray(answer) ? answer : [answer];
+        if (
+          expected.length > 0 &&
+          expected.length === actual.length &&
+          expected.every((item) => actual.includes(item))
+        )
+          correct++;
+      } else if (question.type === 'true/false') {
+        if (!question.truefolse) return;
+        total++;
+        if (question.truefolse && answer === String(question.truefolse.correct))
+          correct++;
+      } else if (question.type === 'input') {
+        const inputs = question.inputs ?? [];
+        if (!inputs.length || inputs.some((input) => !input.correct.length))
+          return;
+        total++;
+        if (!validAnswer) return;
+        const actual = Array.isArray(answer) ? answer : [answer];
+        if (
+          inputs.length > 0 &&
+          actual.length === inputs.length &&
+          inputs.every((input, i) =>
+            input.correct.some(
+              (value) => normalize(value) === normalize(actual[i]),
+            ),
+          )
+        )
+          correct++;
+      } else if (question.type === 'code' && typeof answer === 'string') {
+        const expected = [
+          ...(question.code?.correctCode ?? []),
+          ...(question.code?.correctResult ?? []),
+        ];
+        if (!expected.length) return;
+        total++;
+        if (expected.some((value) => normalize(value) === normalize(answer)))
+          correct++;
+      } else if (question.type === 'code') {
+        const expected = [
+          ...(question.code?.correctCode ?? []),
+          ...(question.code?.correctResult ?? []),
+        ];
+        if (expected.length) total++;
+      }
+    });
+    if (!total)
+      throw new BadRequestException('Тест не содержит проверяемых вопросов');
+    const completed = correct / total >= 0.7;
+    if (completed && !step.isCompleted)
+      await this.studyService.completeStep(
+        userId,
+        data.studyId,
+        data.moduleIndex,
+        data.levelIndex,
+        data.stepIndex,
+      );
+    return { success: true, data: { correct, total, completed } };
+  }
+
   private async generateStepContent(
     userId: string,
     data: GenerateStepContentDto,
@@ -223,6 +344,14 @@ export class StudyPlanService {
     const module = this.getModule(study, data.moduleIndex);
     const level = this.getLevel(module, data.levelIndex);
     const step = this.getStep(level, data.stepIndex);
+    const existing =
+      kind === 'document'
+        ? step.document
+        : kind === 'code'
+          ? step.code
+          : step.quiz;
+    if (existing !== undefined) return { success: true, data: existing };
+    await this.quota.consume(userId);
     const generated = await this.generateContent(
       kind,
       module,

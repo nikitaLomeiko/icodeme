@@ -11,8 +11,8 @@ export interface IProps {
   profile: IProfile;
   onEdit: () => void;
   onLogout: () => void;
-  totalUser: number;
-  globalRank: number;
+  totalUser?: number;
+  globalRank?: number;
 }
 
 export const ProfileDetails: React.FC<IProps> = (props) => {
@@ -82,7 +82,13 @@ export const ProfileDetails: React.FC<IProps> = (props) => {
 
         <div className="flex flex-col lg:flex-row justify-between w-full border-t border-[var(--ui-border)] mt-4 sm:mt-6 pt-4 sm:pt-6 gap-4 sm:gap-6">
           <LevelBar experience={profile.level.experience} />
-          <Rating totalUser={totalUser} globalRank={globalRank} />
+          {totalUser !== undefined && globalRank !== undefined ? (
+            <Rating totalUser={totalUser} globalRank={globalRank} />
+          ) : (
+            <span className="text-sm text-[var(--ui-text-muted)]">
+              Рейтинг пока недоступен
+            </span>
+          )}
         </div>
       </div>
     </Card>

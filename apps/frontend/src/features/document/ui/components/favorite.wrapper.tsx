@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from "react";
-import { documentFavoriteStore, documentOptionStore } from "@/entities/document/model";
-import { observer } from "mobx-react-lite";
-import { LineFavorite } from "@/entities/document/model/types";
 import {
+  documentFavoriteStore,
+  documentOptionStore,
+  type LineFavorite,
   useCreateNewFavoriteMutation,
   useDeleteFavoriteMutation,
-} from "@/entities/document/api";
+} from "@/entities/document";
+import { observer } from "mobx-react-lite";
 import { useNotification } from "@/shared/ui/kit";
-import { isApiError } from "@/shared/api";
 
 interface IProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ interface IProps {
 export const FavoriteWrapper: React.FC<IProps> = observer(({ children }) => {
   const { contentRef, documentId } = documentOptionStore;
 
-  const { lineFavorites, setLineFavorites, removeLineFavoriteById } =
+  const { lineFavorites, addLineFavorite, removeLineFavoriteById } =
     documentFavoriteStore;
 
   const [create] = useCreateNewFavoriteMutation();
@@ -28,7 +28,7 @@ export const FavoriteWrapper: React.FC<IProps> = observer(({ children }) => {
       const text = element.textContent?.trim() || "Элемент";
 
       const indicator = document.createElement("span");
-      indicator.innerHTML = "⭐";
+      indicator.textContent = "⭐";
       indicator.style.cssText = `
           position: absolute;
           left: -24px;
@@ -64,14 +64,15 @@ export const FavoriteWrapper: React.FC<IProps> = observer(({ children }) => {
         favorite: newFavorite,
       });
 
-      if (result.error && isApiError(result.error)) {
-        notification.error("Ошибка при попытки добавить в избранное");
-        return;
+      if (result.error || !result.data?.success) {
+        notification.error("Не удалось добавить в избранное");
+        return false;
       }
 
-      setLineFavorites([...lineFavorites, newFavorite]);
+      addLineFavorite(newFavorite);
+      return true;
     },
-    [lineFavorites],
+    [addLineFavorite, create, documentId, notification],
   );
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export const FavoriteWrapper: React.FC<IProps> = observer(({ children }) => {
         const button = document.createElement("button");
         currentButton = button;
         button.className = "favorite-line-btn";
-        button.innerHTML = isAlreadyFavorite ? "⭐" : "☆";
+        button.textContent = isAlreadyFavorite ? "⭐" : "☆";
 
         let rightOffset = "-10px";
 
@@ -165,29 +166,31 @@ export const FavoriteWrapper: React.FC<IProps> = observer(({ children }) => {
           e.stopPropagation();
           e.preventDefault();
 
-          if (isAlreadyFavorite) {
-            const fav = lineFavorites.find(
-              (f) => f.elementId === lineElement.id,
-            );
+          const currentFavorite = documentFavoriteStore.lineFavorites.find(
+            (f) => f.elementId === lineElement.id,
+          );
+          if (currentFavorite) {
+            const fav = currentFavorite;
             if (fav) {
               const result = await deleted({
                 documentId: documentId,
                 favoriteId: fav.id,
               });
 
-              if (result.error && isApiError(result.error)) {
+              if (result.error || !result.data?.success) {
                 notification.error("Ошибка при попытки удалить из избранного");
                 return;
               }
 
               removeLineFavoriteById(fav.id);
-              button.innerHTML = "☆";
+              button.textContent = "☆";
               button.title = "Добавить в избранное";
             }
           } else {
-            addLineToFavorites(lineElement);
-            button.innerHTML = "⭐";
-            button.title = "Удалить из избранного";
+            if (await addLineToFavorites(lineElement)) {
+              button.textContent = "⭐";
+              button.title = "Удалить из избранного";
+            }
           }
         });
 
@@ -246,7 +249,15 @@ export const FavoriteWrapper: React.FC<IProps> = observer(({ children }) => {
         currentButton.remove();
       }
     };
-  }, [lineFavorites, addLineToFavorites, contentRef]);
+  }, [
+    lineFavorites,
+    addLineToFavorites,
+    contentRef,
+    deleted,
+    documentId,
+    notification,
+    removeLineFavoriteById,
+  ]);
 
   return children;
 });

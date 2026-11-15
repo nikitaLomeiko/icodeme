@@ -4,22 +4,49 @@ import { AchievementCarousel } from "@/widgets/achievement-view";
 import { AboutView, ProfileView } from "@/widgets/profile-view";
 import { StudyList } from "@/widgets/study-view";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export const ProfilePage: React.FC = () => {
   const router = useRouter();
-  const { data: profile } = useGetProfileQuery(null);
-  const { data: studies } = useGetStudiesQuery(null);
+  const profileQuery = useGetProfileQuery(null);
+  const studiesQuery = useGetStudiesQuery(null);
+  const [retrying, setRetrying] = useState(false);
+  const profile = profileQuery.data;
+  const studies = studiesQuery.data;
 
-  if (!profile?.data || !studies?.data) {
-    return null;
-  }
+  if (profileQuery.isLoading || studiesQuery.isLoading || retrying)
+    return (
+      <p role="status" className="p-6">
+        Загружаем профиль…
+      </p>
+    );
+  if (
+    profileQuery.isError ||
+    studiesQuery.isError ||
+    !profile?.data ||
+    !studies?.data
+  )
+    return (
+      <div role="alert" className="p-6">
+        Не удалось загрузить профиль.
+        <button
+          onClick={() => {
+            setRetrying(true);
+            void Promise.all([
+              profileQuery.refetch(),
+              studiesQuery.refetch(),
+            ]).finally(() => setRetrying(false));
+          }}
+        >
+          Повторить
+        </button>
+      </div>
+    );
 
   return (
     <>
       <ProfileView
         profileDetails={{
-          globalRank: 42,
-          totalUser: 121,
           profile: profile?.data,
         }}
       />

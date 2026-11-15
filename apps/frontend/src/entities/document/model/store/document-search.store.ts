@@ -32,6 +32,14 @@ class DocumentSearchStore {
   toggleShowSearch = () => {
     this.isShowSearch = !this.isShowSearch;
   };
+
+  reset = () => {
+    this.searchResultsRef = createRef<[]>();
+    this.searchQuery = "";
+    this.totalResults = 0;
+    this.currentResultIndex = -1;
+    this.isShowSearch = false;
+  };
 }
 
 export const documentSearchStore = new DocumentSearchStore();

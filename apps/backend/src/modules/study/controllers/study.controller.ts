@@ -19,6 +19,7 @@ import {
   GenerateStepContentDto,
   GenerateStepsDto,
   StudyIdDto,
+  SubmitQuizDto,
 } from '../dto/study.dto';
 import { StudyPlanService } from '../services/study-plan.service';
 
@@ -116,5 +117,15 @@ export class StudyController {
     @Body() data: GenerateStepContentDto,
   ): Promise<IControllerResponse<IQuiz>> {
     return this.studyPlanService.generateQuiz(user.userId, data);
+  }
+
+  @Post('steps/quiz/submit')
+  submitQuiz(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: SubmitQuizDto,
+  ): Promise<
+    IControllerResponse<{ correct: number; total: number; completed: boolean }>
+  > {
+    return this.studyPlanService.submitQuiz(user.userId, data);
   }
 }

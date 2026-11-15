@@ -2,7 +2,7 @@ import { ILevel, IModule, IQuiz, IStep, IStudy, StudyKey } from '../models';
 import { Injectable } from '@nestjs/common';
 import { IServiceResponse } from '@core/types/response.type';
 import { StudyError } from '../types';
-import { Collection, Db } from 'mongodb';
+import { Collection, Db, Filter } from 'mongodb';
 import { BaseMongoRepository } from '@core/database';
 import { generateId } from '@core/helpers/generate-id';
 import { randomUUID } from 'crypto';
@@ -11,9 +11,19 @@ import { randomUUID } from 'crypto';
 export class StudyService {
   private readonly repositoryStudy: BaseMongoRepository<IStudy>;
   private readonly collection: Collection<IStudy>;
+  private readonly contentCollection: Collection<{
+    _id: string;
+    userId: string;
+    studyId: string;
+    stepId: string;
+    kind: 'document' | 'code' | 'quiz';
+    value: string | IQuiz;
+    updatedAt: Date;
+  }>;
 
   constructor(db: Db) {
     this.collection = db.collection<IStudy>(StudyKey);
+    this.contentCollection = db.collection('studyStepContent');
     this.repositoryStudy = new BaseMongoRepository<IStudy>(
       db.collection(StudyKey),
     );
@@ -40,22 +50,26 @@ export class StudyService {
       return { success: false, error: StudyError.STUDY_NOT_FOUND };
     }
 
-    return { success: true, data: this.withStepIds(study) };
+    return {
+      success: true,
+      data: await this.withContent(this.withStepIds(study)),
+    };
   }
 
   async getStepByIdAndUserId(
     stepId: string,
     userId: string,
   ): Promise<IStep | null> {
-    const studies = await this.repositoryStudy.find({ userId });
-
-    for (const storedStudy of studies) {
-      const study = this.withStepIds(storedStudy);
-      for (const module of study.studyPlanJSON) {
-        for (const level of module.levels) {
-          const step = level.steps.find((item) => item.id === stepId);
-          if (step) return step;
-        }
+    const storedStudy = await this.collection.findOne({
+      userId,
+      'studyPlanJSON.levels.steps.id': stepId,
+    } as Filter<IStudy>);
+    if (!storedStudy) return null;
+    const study = this.withStepIds(storedStudy);
+    for (const module of study.studyPlanJSON) {
+      for (const level of module.levels) {
+        const step = level.steps.find((item) => item.id === stepId);
+        if (step) return step;
       }
     }
 
@@ -77,6 +91,36 @@ export class StudyService {
                 `study-step:${study._id}:${moduleIndex}:${levelIndex}:${stepIndex}`,
               ),
           })),
+        })),
+      })),
+    };
+  }
+
+  private async withContent(study: IStudy): Promise<IStudy> {
+    const entries = await this.contentCollection
+      .find({ userId: study.userId, studyId: study._id })
+      .toArray();
+    if (!entries.length) return study;
+    const values = new Map(
+      entries.map((item) => [`${item.stepId}:${item.kind}`, item.value]),
+    );
+    return {
+      ...study,
+      studyPlanJSON: study.studyPlanJSON.map((module) => ({
+        ...module,
+        levels: module.levels.map((level) => ({
+          ...level,
+          steps: level.steps.map((step) => {
+            const document = values.get(`${step.id}:document`);
+            const code = values.get(`${step.id}:code`);
+            const quiz = values.get(`${step.id}:quiz`);
+            return {
+              ...step,
+              document: typeof document === 'string' ? document : step.document,
+              code: typeof code === 'string' ? code : step.code,
+              quiz: quiz && typeof quiz === 'object' ? quiz : step.quiz,
+            };
+          }),
         })),
       })),
     };
@@ -137,6 +181,7 @@ export class StudyService {
     }
 
     await this.repositoryStudy.delete({ _id: id });
+    await this.contentCollection.deleteMany({ studyId: id, userId });
 
     return { success: true, data: null };
   }
@@ -204,10 +249,45 @@ export class StudyService {
     value: string | IQuiz,
   ): Promise<boolean> {
     const path = `studyPlanJSON.${moduleIndex}.levels.${levelIndex}.steps.${stepIndex}`;
-    const result = await this.collection.updateOne(
-      { _id: id, userId, [path]: { $exists: true } },
-      { $set: { [`${path}.${kind}`]: value, updatedAt: new Date() } },
+    const study = await this.collection.findOne({
+      _id: id,
+      userId,
+      [path]: { $exists: true },
+    } as Filter<IStudy>);
+    const step =
+      study?.studyPlanJSON?.[moduleIndex]?.levels?.[levelIndex]?.steps?.[
+        stepIndex
+      ];
+    if (!step?.id) return false;
+    await this.contentCollection.updateOne(
+      { _id: `${id}:${step.id}:${kind}` },
+      {
+        $set: {
+          userId,
+          studyId: id,
+          stepId: step.id,
+          kind,
+          value,
+          updatedAt: new Date(),
+        },
+      },
+      { upsert: true },
     );
-    return result.matchedCount > 0;
+    return true;
+  }
+
+  async completeStep(
+    userId: string,
+    studyId: string,
+    moduleIndex: number,
+    levelIndex: number,
+    stepIndex: number,
+  ): Promise<boolean> {
+    const path = `studyPlanJSON.${moduleIndex}.levels.${levelIndex}.steps.${stepIndex}`;
+    const result = await this.collection.updateOne(
+      { _id: studyId, userId, [`${path}.isCompleted`]: false },
+      { $set: { [`${path}.isCompleted`]: true, updatedAt: new Date() } },
+    );
+    return result.modifiedCount > 0;
   }
 }

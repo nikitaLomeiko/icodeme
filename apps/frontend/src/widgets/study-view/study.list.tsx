@@ -4,6 +4,7 @@ import { StudyDeleteForm } from "@/features/study";
 import { Card, Modal, ModalBody, useNotification } from "@/shared/ui/kit";
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 import { EmptyMessage } from "./components/empty.message";
 
 interface IProps {
@@ -15,6 +16,7 @@ export const StudyList: React.FC<IProps> = ({ list }) => {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
   const [selectedStudy, setSelectedStudy] = useState<IStudy | null>(null);
   const notification = useNotification();
+  const router = useRouter();
 
   const handleAddSuccess = () => {
     setAddModalOpen(false);
@@ -54,7 +56,11 @@ export const StudyList: React.FC<IProps> = ({ list }) => {
               <PlanItem
                 key={study._id}
                 onDelete={() => handleDeleteClick(study)}
-                onContinue={() => null}
+                onContinue={() =>
+                  router.push(
+                    `/?studyId=${encodeURIComponent(study._id)}&moduleIndex=${study.study.module ?? 0}`,
+                  )
+                }
                 study={study}
               />
             ))}

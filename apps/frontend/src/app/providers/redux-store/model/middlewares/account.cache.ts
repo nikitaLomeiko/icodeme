@@ -2,7 +2,12 @@ import { type Middleware } from "@reduxjs/toolkit";
 import { authApi } from "@/entities/auth";
 import { profileApi } from "@/entities/profile";
 import { resetStudyState, studyApi } from "@/entities/study";
-import { documentApi } from "@/entities/document";
+import {
+  documentApi,
+  documentFavoriteStore,
+  documentOptionStore,
+  documentSearchStore,
+} from "@/entities/document";
 import { ideApi } from "@/features/ide";
 
 export const accountCache: Middleware = (api) => (next) => (action) => {
@@ -14,6 +19,9 @@ export const accountCache: Middleware = (api) => (next) => (action) => {
     previous.user.id !== current.user.id ||
     previous.isAuthenticated !== current.isAuthenticated
   ) {
+    documentFavoriteStore.reset();
+    documentOptionStore.reset();
+    documentSearchStore.reset();
     api.dispatch(resetStudyState());
 
     for (const endpoint of [authApi, profileApi, studyApi, documentApi, ideApi])

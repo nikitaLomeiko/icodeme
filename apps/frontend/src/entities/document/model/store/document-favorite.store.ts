@@ -13,6 +13,17 @@ class DocumentFavoriteStore {
     this.lineFavorites = favorites;
   };
 
+  addLineFavorite = (favorite: LineFavorite) => {
+    if (!this.lineFavorites.some((item) => item.id === favorite.id)) {
+      this.lineFavorites.push(favorite);
+    }
+  };
+
+  reset = () => {
+    this.lineFavorites = [];
+    this.isShowFavorites = false;
+  };
+
   toggleShowFavorites = () => {
     this.isShowFavorites = !this.isShowFavorites;
   };

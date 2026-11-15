@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { Db, MongoServerError } from 'mongodb';
 import { BaseMongoRepository } from '@core/database';
 import { generateId } from '@core/helpers/generate-id';
@@ -106,23 +106,24 @@ export class ProfileService {
     data: Pick<IProfileData, 'avatar' | 'name' | 'about'>,
     userId: string,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {
-    const profile = await this.repositoryProfile.findOne({ userId });
-
-    if (!profile) {
+    const updated = await this.db
+      .collection<IProfile>(ProfileKey)
+      .findOneAndUpdate(
+        { userId },
+        {
+          $set: {
+            'data.avatar': data.avatar,
+            'data.name': data.name,
+            'data.about': data.about,
+            updatedAt: new Date(),
+          },
+        },
+        { returnDocument: 'after' },
+      );
+    if (!updated) {
       return { success: false, error: ProfileError.USER_NOT_FOUND };
     }
-
-    const updatedData = { ...profile.data, ...data };
-    const result = await this.repositoryProfile.update(
-      { userId },
-      { data: updatedData },
-    );
-
-    if (!result) {
-      return { success: false, error: ProfileError.USER_NOT_FOUND };
-    }
-
-    return { success: true, data: { ...profile, data: updatedData } };
+    return { success: true, data: updated };
   }
 
   async deleteProfileByUserId(
@@ -170,84 +171,68 @@ export class ProfileService {
     exp: number,
     userId: string,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {
-    const profile = await this.repositoryProfile.findOne({ userId });
-
-    if (!profile) {
-      return { success: false, error: ProfileError.PROFILE_NOT_FOUND };
+    if (!Number.isFinite(exp) || exp <= 0)
+      throw new ConflictException('Некорректное количество опыта');
+    const collection = this.db.collection<IProfile>(ProfileKey);
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const profile = await collection.findOne({ userId });
+      if (!profile)
+        return { success: false, error: ProfileError.PROFILE_NOT_FOUND };
+      let experience = profile.level.experience + exp;
+      let currentLevel = profile.level.currentLevel;
+      let toNext = profile.level.experienceToNextLevel;
+      while (experience >= toNext) {
+        experience -= toNext;
+        currentLevel++;
+        toNext = Math.max(toNext + 1, Math.floor(toNext * 1.15));
+      }
+      const updated = await collection.findOneAndUpdate(
+        { userId, level: profile.level },
+        {
+          $set: {
+            level: { experience, currentLevel, experienceToNextLevel: toNext },
+            updatedAt: new Date(),
+          },
+        },
+        { returnDocument: 'after' },
+      );
+      if (updated) return { success: true, data: updated };
     }
-
-    let newExperience = profile.level.experience + exp;
-    let newCurrentLevel = profile.level.currentLevel;
-    let newExperienceToNextLevel = profile.level.experienceToNextLevel;
-    while (newExperience >= newExperienceToNextLevel) {
-      newExperience -= newExperienceToNextLevel;
-      newCurrentLevel++;
-      newExperienceToNextLevel = Math.floor(newExperienceToNextLevel * 1.15);
-    }
-
-    const updatedProfile = {
-      ...profile,
-      level: {
-        experience: newExperience,
-        currentLevel: newCurrentLevel,
-        experienceToNextLevel: newExperienceToNextLevel,
-      },
-      updatedAt: new Date(),
-    };
-
-    const result = await this.repositoryProfile.update(
-      { userId },
-      updatedProfile,
+    throw new ConflictException(
+      'Не удалось обновить опыт из-за параллельных изменений',
     );
-
-    if (!result) {
-      return { success: false, error: ProfileError.USER_NOT_FOUND };
-    }
-
-    return {
-      success: true,
-      data: updatedProfile,
-    };
   }
 
   async addMultipleAchievementsByUserId(
     achievements: IAchievement[],
     userId: string,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {
-    const profile = await this.repositoryProfile.findOne({ userId });
-
-    if (!profile) {
-      return { success: false, error: ProfileError.PROFILE_NOT_FOUND };
+    const collection = this.db.collection<IProfile>(ProfileKey);
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const profile = await collection.findOne({ userId });
+      if (!profile)
+        return { success: false, error: ProfileError.PROFILE_NOT_FOUND };
+      const existingIds = new Set(profile.achievements.map((item) => item.id));
+      const newAchievements = achievements.filter(
+        (item) => !existingIds.has(item.id),
+      );
+      if (!newAchievements.length)
+        return {
+          success: false,
+          error: ProfileError.ACHIEVEMENT_ALREADY_EXISTS,
+        };
+      const updated = await collection.findOneAndUpdate(
+        { userId, achievements: profile.achievements },
+        {
+          $push: { achievements: { $each: newAchievements } },
+          $set: { updatedAt: new Date() },
+        },
+        { returnDocument: 'after' },
+      );
+      if (updated) return { success: true, data: updated };
     }
-
-    const existingIds = new Set(profile.achievements.map((a) => a.id));
-    const newAchievements = achievements.filter((a) => !existingIds.has(a.id));
-
-    if (newAchievements.length === 0) {
-      return {
-        success: false,
-        error: ProfileError.ACHIEVEMENT_ALREADY_EXISTS,
-      };
-    }
-
-    const updatedProfile = {
-      ...profile,
-      achievements: [...profile.achievements, ...newAchievements],
-      updatedAt: new Date(),
-    };
-
-    const result = await this.repositoryProfile.update(
-      { userId },
-      updatedProfile,
+    throw new ConflictException(
+      'Не удалось обновить достижения из-за параллельных изменений',
     );
-
-    if (!result) {
-      return { success: false, error: ProfileError.USER_NOT_FOUND };
-    }
-
-    return {
-      success: true,
-      data: updatedProfile,
-    };
   }
 }

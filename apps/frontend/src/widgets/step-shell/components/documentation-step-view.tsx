@@ -3,6 +3,7 @@
 import { DocumentView } from "@/widgets/document-view";
 import { StepShell } from "../step-shell";
 import { useStepRouteParams, useStudyStep } from "../lib/hooks";
+import { GenerateStepContent } from "./generate-step-content";
 
 export const DocumentationStepView: React.FC = () => {
   const params = useStepRouteParams();
@@ -13,6 +14,12 @@ export const DocumentationStepView: React.FC = () => {
   if (isLoading) return <StepShell loading />;
   if (isError || !study)
     return <StepShell message="Не удалось загрузить план обучения." />;
+  if (documentStep && !documentStep.document)
+    return (
+      <StepShell>
+        <GenerateStepContent params={params} kind="document" />
+      </StepShell>
+    );
   if (!documentStep?.document)
     return <StepShell message="Документация для этого шага не найдена." />;
 

@@ -41,7 +41,7 @@ export const ideApi = createApi({
       }),
     }),
     stopContainer: build.mutation<
-      IResponse<IContainerResponse>,
+      IResponse<void>,
       { containerId: string; keepalive?: boolean }
     >({
       query: ({ containerId, keepalive }) => ({

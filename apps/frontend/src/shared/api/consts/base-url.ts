@@ -1,7 +1,8 @@
+const configuredUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 const localApiUrl =
   typeof window !== "undefined" &&
   ["localhost", "127.0.0.1"].includes(window.location.hostname)
     ? `http://${window.location.hostname}:3000/`
-    : "http://localhost:3000/";
+    : undefined;
 
-export const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || localApiUrl;
+export const baseUrl = configuredUrl || localApiUrl || "/api/";

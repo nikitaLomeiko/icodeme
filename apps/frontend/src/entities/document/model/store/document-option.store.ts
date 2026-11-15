@@ -51,6 +51,18 @@ class DocumentOptionStore {
   setDocumentId = (id: string) => {
     this.documentId = id;
   };
+
+  reset = () => {
+    this.documentId = "";
+    this.content = "";
+    this.title = "";
+    this.contentRef = createRef<HTMLDivElement | null>();
+    this.searchResultsRef = createRef<[]>();
+    this.isScrollingProgrammaticallyRef = createRef<false>();
+    this.fontSize = "md";
+    this.isZenMode = false;
+    this.isOpenOptionMenu = false;
+  };
 }
 
 export const documentOptionStore = new DocumentOptionStore();

@@ -69,6 +69,13 @@ export const DatabaseProvider: Provider = {
         .createIndex({ userId: 1 }, { unique: true }),
       db.collection('Study').createIndex({ userId: 1 }),
       db
+        .collection('Study')
+        .createIndex({ userId: 1, 'studyPlanJSON.levels.steps.id': 1 }),
+      db.collection('studyStepContent').createIndex({ userId: 1, studyId: 1 }),
+      db
+        .collection('studyGenerationUsage')
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+      db
         .collection('dockerRuntimeLeases')
         .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
       db
