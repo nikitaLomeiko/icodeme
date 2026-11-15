@@ -1,31 +1,37 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
 import { FaRedo } from "react-icons/fa";
-import { computeResults } from "../model/libs/utils/scoring";
 import {
-  formatCorrectAnswer,
-  formatUserAnswer,
-  pointsLabel,
-} from "../model/libs/utils/answers";
-import { restartQuiz } from "../model/store/actions";
-import { useQuiz } from "../model/store/use.quiz";
-import { ResultStat } from "./components/result.stat";
-import { stateMeta } from "../model/consts/stat.meta";
+  formatQuizCorrectAnswer,
+  formatQuizUserAnswer,
+  quizPointsLabel,
+} from "../model/utils/quiz-answer-format";
+import type {
+  IQuizResults,
+  IQuizTest,
+  QuizAnswerValue,
+} from "../model/types/quiz-session.types";
+import { QuizResultStat } from "./components/quiz-result-stat";
+import { quizResultMeta } from "./components/quiz-result.meta";
 
-export const ResultsScreen: React.FC = () => {
-  const { state, dispatch } = useQuiz();
-  const { answers, skipped, quiz } = state;
+interface IProps {
+  quiz: IQuizTest;
+  answers: Record<string, QuizAnswerValue>;
+  results: IQuizResults;
+  onRestart: () => void;
+}
 
-  const results = useMemo(
-    () => computeResults(answers, skipped, quiz),
-    [answers, skipped, quiz],
-  );
+export const TestResultsScreen: React.FC<IProps> = ({
+  quiz,
+  answers,
+  results,
+  onRestart,
+}) => {
 
   const percent =
-    quiz?.settings.isScore && results?.maxScore
+    quiz.settings.isScore && results.maxScore
       ? results.totalEarned / results.maxScore
-      : results?.gradedCount
+      : results.gradedCount
         ? results.correctCount / results.gradedCount
         : 0;
 
@@ -34,10 +40,6 @@ export const ResultsScreen: React.FC = () => {
   const ringRadius = (ringSize - ringStroke) / 3;
   const ringCircumference = 2 * Math.PI * ringRadius;
 
-  const restart = useCallback(() => {
-    dispatch(restartQuiz());
-  }, [dispatch]);
-
   return (
     <div className="w-full min-w-0 space-y-6">
       <div className="bg-[var(--ui-background-secondary)] border border-[var(--ui-border)] rounded-2xl shadow-sm p-6 sm:p-8 text-center">
@@ -45,7 +47,7 @@ export const ResultsScreen: React.FC = () => {
           Тест пройден
         </p>
         <h2 className="text-2xl sm:text-3xl font-bold text-[var(--ui-text)] mt-1">
-          {state.quiz?.title}
+          {quiz.title}
         </h2>
 
         <div className="relative h-96 mx-auto mt-7">
@@ -87,22 +89,22 @@ export const ResultsScreen: React.FC = () => {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {quiz?.settings.isScore ? (
+            {quiz.settings.isScore ? (
               <>
                 <span className="text-3xl font-bold text-[var(--ui-text)]">
-                  {results?.totalEarned}
+                  {results.totalEarned}
                 </span>
                 <span className="text-xs text-[var(--ui-text-muted)] font-semibold">
-                  из {results?.maxScore} баллов
+                  из {results.maxScore} баллов
                 </span>
               </>
             ) : (
               <>
                 <span className="text-3xl font-bold text-[var(--ui-text)]">
-                  {results?.correctCount}
+                  {results.correctCount}
                 </span>
                 <span className="text-xs text-[var(--ui-text-muted)] font-semibold">
-                  из {results?.gradedCount} проверяемых
+                  из {results.gradedCount} проверяемых
                 </span>
               </>
             )}
@@ -110,32 +112,32 @@ export const ResultsScreen: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-7">
-          <ResultStat
+          <QuizResultStat
             label="Отвечено"
-            value={results?.answeredCount || 0}
+            value={results.answeredCount}
             color="var(--ui-primary)"
           />
-          <ResultStat
+          <QuizResultStat
             label="Не отвечено"
-            value={results?.skippedCount || 0}
+            value={results.skippedCount}
             color="var(--ui-text-muted)"
           />
-          <ResultStat
+          <QuizResultStat
             label="Верно"
-            value={results?.correctCount || 0}
+            value={results.correctCount}
             color="var(--ui-success)"
           />
-          {quiz?.settings.isScore ? (
-            <ResultStat
+          {quiz.settings.isScore ? (
+            <QuizResultStat
               label="Баллы"
-              value={`${results?.totalEarned} / ${results?.maxScore}`}
+              value={`${results.totalEarned} / ${results.maxScore}`}
               color="var(--ui-warning)"
             />
           ) : (
-            <ResultStat
+            <QuizResultStat
               label="Неверно"
               value={
-                results?.detail.filter((item) => item.state === "incorrect")
+                results.detail.filter((item) => item.state === "incorrect")
                   .length || 0
               }
               color="var(--ui-error)"
@@ -145,7 +147,7 @@ export const ResultsScreen: React.FC = () => {
 
         <button
           type="button"
-          onClick={restart}
+          onClick={onRestart}
           className="
             mt-8 inline-flex items-center justify-center gap-2
             px-6 py-3 text-base font-bold rounded-xl
@@ -163,8 +165,8 @@ export const ResultsScreen: React.FC = () => {
         <h3 className="text-sm font-semibold text-[var(--ui-text-secondary)] uppercase tracking-wider">
           Разбор ответов
         </h3>
-        {results?.detail.map((entry, index) => {
-          const meta = stateMeta[entry.state];
+        {results.detail.map((entry, index) => {
+          const meta = quizResultMeta[entry.state];
           const StateIcon = meta.icon;
 
           return (
@@ -186,10 +188,10 @@ export const ResultsScreen: React.FC = () => {
                     <p className="text-sm font-semibold text-[var(--ui-text)] leading-snug">
                       {index + 1}. {entry.question.title}
                     </p>
-                    {quiz?.settings.isScore && (
+                    {quiz.settings.isScore && (
                       <span className="text-xs font-bold text-[var(--ui-warning)] whitespace-nowrap">
                         {entry.question.points
-                          ? `${entry.earned} / ${entry.question.points} ${pointsLabel(entry.question.points)}`
+                          ? `${entry.earned} / ${entry.question.points} ${quizPointsLabel(entry.question.points)}`
                           : "—"}
                       </span>
                     )}
@@ -199,7 +201,7 @@ export const ResultsScreen: React.FC = () => {
                     <p className="text-xs text-[var(--ui-text-muted)] mt-1.5">
                       Ваш ответ:{" "}
                       <span className="text-[var(--ui-text-secondary)] font-medium">
-                        {formatUserAnswer(
+                        {formatQuizUserAnswer(
                           entry.question,
                           answers[entry.question.id],
                         )}
@@ -215,7 +217,7 @@ export const ResultsScreen: React.FC = () => {
                       <p className="text-xs text-[var(--ui-success)] mt-0.5">
                         Правильный ответ:{" "}
                         <span className="font-medium">
-                          {formatCorrectAnswer(entry.question)}
+                          {formatQuizCorrectAnswer(entry.question)}
                         </span>
                       </p>
                     )}

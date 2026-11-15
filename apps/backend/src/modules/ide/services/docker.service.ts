@@ -328,7 +328,7 @@ export class DockerService implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      await container.remove({ force: true, v: true });
+      await this.removeContainer(container);
       if (imageId)
         await this.imageService
           .removeImageIfUnused(this.docker, imageId)
@@ -360,6 +360,36 @@ export class DockerService implements OnModuleInit, OnModuleDestroy {
           ? DockerError.CONTAINER_NOT_FOUND
           : DockerError.CONTAINER_NOT_RUNNING,
       };
+    }
+  }
+
+  private async removeContainer(container: Docker.Container): Promise<void> {
+    try {
+      await container.remove({ force: true, v: true });
+    } catch (error) {
+      if (isDockerNotFound(error)) return;
+      const status = (error as { statusCode?: unknown })?.statusCode;
+      const message =
+        typeof (error as { message?: unknown })?.message === 'string'
+          ? (error as { message: string }).message
+          : getErrorMessage(error);
+      if (status !== 409 || !/removal .* already in progress/i.test(message))
+        throw error;
+
+      // Docker has accepted another removal request. Wait until its name is
+      // released before replacing this runtime with a new container.
+      for (let attempt = 0; attempt < 50; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        try {
+          await container.inspect();
+        } catch (inspectError) {
+          if (isDockerNotFound(inspectError)) return;
+          throw inspectError;
+        }
+      }
+      throw new Error(
+        `Timed out waiting for container removal: ${container.id}`,
+      );
     }
   }
 
@@ -399,7 +429,6 @@ export class DockerService implements OnModuleInit, OnModuleDestroy {
       for (const candidate of matchingContainers) {
         const existingContainerId = candidate.Id;
         const existingContainer = this.docker.getContainer(existingContainerId);
-        await this.assertOwner(existingContainerId, project.userId);
         try {
           const info = await existingContainer.inspect();
           if (
@@ -409,6 +438,7 @@ export class DockerService implements OnModuleInit, OnModuleDestroy {
             throw new NotFoundException('Контейнер не найден');
           if (info.Image) oldImageIds.add(info.Image);
         } catch (error) {
+          if (isDockerNotFound(error)) continue;
           this.logger.error(
             `Existing container inspection failed: ${getErrorMessage(error)}`,
           );
@@ -426,7 +456,7 @@ export class DockerService implements OnModuleInit, OnModuleDestroy {
           }
         }
 
-        await existingContainer.remove({ force: true, v: true });
+        await this.removeContainer(existingContainer);
       }
 
       const container = await this.docker.createContainer({

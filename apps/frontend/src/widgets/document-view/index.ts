@@ -1,1 +1,1 @@
-export { DocumentView } from "./ui/document-view";
+export { DocumentView } from "./document-view";

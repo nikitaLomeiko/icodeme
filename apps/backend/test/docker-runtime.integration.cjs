@@ -212,8 +212,9 @@ async function main() {
     });
     assert.equal(remaining.length, 0);
     assert.equal(fs.existsSync(workspace), false);
-    await assert.doesNotReject(() =>
-      docker.getImage(second.data.imageName).inspect(),
+    await assert.rejects(
+      () => docker.getImage(second.data.imageName).inspect(),
+      (error) => error.statusCode === 404,
     );
 
     const terminal = await service.createAndRunContainer(
@@ -288,8 +289,9 @@ async function main() {
     );
     assert.equal(terminalStopped.success, true);
     assert.equal(fs.existsSync(terminalWorkspace), false);
-    await assert.doesNotReject(() =>
-      docker.getImage(terminal.data.imageName).inspect(),
+    await assert.rejects(
+      () => docker.getImage(terminal.data.imageName).inspect(),
+      (error) => error.statusCode === 404,
     );
 
     console.log('Docker runtime integration test passed');

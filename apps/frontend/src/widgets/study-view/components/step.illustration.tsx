@@ -4,9 +4,7 @@ const colors: Record<StepType, string> = {
   document: "#38bdf8",
   code: "#34d399",
   terminal: "#a78bfa",
-  quiz: "#fbbf24",
   test: "#fb923c",
-  exam: "#c084fc",
 };
 
 interface IProps {
@@ -14,7 +12,7 @@ interface IProps {
 }
 
 export const StepIllustration: React.FC<IProps> = ({ type }) => {
-  const color = colors[type];
+  const color = colors[type] ?? colors.test;
 
   return (
     <div
@@ -152,65 +150,6 @@ export const StepIllustration: React.FC<IProps> = ({ type }) => {
           </>
         )}
 
-        {type === "quiz" && (
-          <>
-            <rect
-              x="86"
-              y="21"
-              width="148"
-              height="130"
-              rx="14"
-              fill="var(--ui-background-secondary)"
-              stroke={color}
-              strokeWidth="2"
-            />
-            <circle cx="160" cy="61" r="28" fill={color} opacity="0.18" />
-            <path
-              d="M151 54a10 10 0 1 1 16 8c-5 3-7 5-7 9"
-              stroke={color}
-              strokeWidth="5"
-              strokeLinecap="round"
-            />
-            <circle cx="160" cy="80" r="3" fill={color} />
-            <rect
-              x="103"
-              y="99"
-              width="53"
-              height="16"
-              rx="8"
-              fill={color}
-              opacity="0.22"
-            />
-            <rect
-              x="164"
-              y="99"
-              width="53"
-              height="16"
-              rx="8"
-              fill={color}
-              opacity="0.65"
-            />
-            <rect
-              x="103"
-              y="122"
-              width="53"
-              height="16"
-              rx="8"
-              fill={color}
-              opacity="0.22"
-            />
-            <rect
-              x="164"
-              y="122"
-              width="53"
-              height="16"
-              rx="8"
-              fill={color}
-              opacity="0.22"
-            />
-          </>
-        )}
-
         {type === "test" && (
           <>
             <rect
@@ -249,44 +188,6 @@ export const StepIllustration: React.FC<IProps> = ({ type }) => {
           </>
         )}
 
-        {type === "exam" && (
-          <>
-            <rect
-              x="79"
-              y="24"
-              width="162"
-              height="111"
-              rx="12"
-              fill="var(--ui-background-secondary)"
-              stroke={color}
-              strokeWidth="2"
-            />
-            <path
-              d="M97 43h78M97 55h61M97 85h68M97 97h50"
-              stroke={color}
-              strokeWidth="5"
-              strokeLinecap="round"
-              opacity="0.4"
-            />
-            <circle cx="202" cy="104" r="25" fill={color} opacity="0.22" />
-            <circle cx="202" cy="104" r="17" fill={color} />
-            <path
-              d="m202 94 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"
-              fill="var(--ui-background-secondary)"
-            />
-            <path
-              d="m190 126-5 26 17-9 17 9-5-26"
-              fill={color}
-              opacity="0.85"
-            />
-            <path
-              d="M110 123h52"
-              stroke={color}
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </>
-        )}
       </svg>
     </div>
   );

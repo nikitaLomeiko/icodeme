@@ -83,14 +83,28 @@ export class StudyService {
         ...module,
         levels: module.levels.map((level, levelIndex) => ({
           ...level,
-          steps: level.steps.map((step, stepIndex) => ({
-            ...step,
-            id:
-              step.id ||
-              generateId(
-                `study-step:${study._id}:${moduleIndex}:${levelIndex}:${stepIndex}`,
-              ),
-          })),
+          steps: level.steps.map((step, stepIndex) => {
+            const legacyStep = step as unknown as Omit<IStep, 'type'> & {
+              type: string;
+              exam?: IQuiz;
+            };
+            const { exam, ...canonicalStep } = legacyStep;
+            const type =
+              legacyStep.type === 'quiz' || legacyStep.type === 'exam'
+                ? 'test'
+                : legacyStep.type;
+
+            return {
+              ...canonicalStep,
+              type: type as IStep['type'],
+              quiz: canonicalStep.quiz ?? exam,
+              id:
+                step.id ||
+                generateId(
+                  `study-step:${study._id}:${moduleIndex}:${levelIndex}:${stepIndex}`,
+                ),
+            };
+          }),
         })),
       })),
     };
@@ -196,6 +210,40 @@ export class StudyService {
       { $set: { studyPlanJSON: modules, updatedAt: new Date() } },
     );
     return result.matchedCount > 0;
+  }
+
+  async addTestStepIfMissing(
+    userId: string,
+    studyId: string,
+    step: IStep,
+  ): Promise<boolean> {
+    const result = await this.collection.updateOne(
+      {
+        _id: studyId,
+        userId,
+        'studyPlanJSON.0.levels.0': { $exists: true },
+        'studyPlanJSON.levels.steps.type': { $ne: 'test' },
+      },
+      {
+        $push: { 'studyPlanJSON.0.levels.0.steps': step },
+        $set: { updatedAt: new Date() },
+      },
+    );
+    return result.modifiedCount > 0;
+  }
+
+  async replaceStudyPlanIfUnchanged(
+    userId: string,
+    studyId: string,
+    expectedUpdatedAt: Date | undefined,
+    modules: IModule[],
+    updatedAt: Date,
+  ): Promise<boolean> {
+    const result = await this.collection.updateOne(
+      { _id: studyId, userId, updatedAt: expectedUpdatedAt },
+      { $set: { studyPlanJSON: modules, updatedAt } },
+    );
+    return result.modifiedCount > 0;
   }
 
   async setLevelsIfEmpty(

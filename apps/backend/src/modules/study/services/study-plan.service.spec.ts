@@ -40,7 +40,7 @@ describe('StudyPlanService quiz submission', () => {
                 id: 'step-1',
                 title: 'Quiz',
                 description: '',
-                type: 'quiz',
+                type: 'test',
                 isCompleted: false,
                 isCurrent: true,
                 position: { x: 0, y: 0 },

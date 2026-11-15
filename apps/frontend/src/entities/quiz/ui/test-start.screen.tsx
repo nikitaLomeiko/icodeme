@@ -1,23 +1,20 @@
 "use client";
 
 import { FaClock, FaList, FaPlay, FaStar } from "react-icons/fa";
-import { startQuiz } from "../model/store/actions";
-import { useQuiz } from "../model/store/use.quiz";
-import { MiniStat } from "./components/mini.stat";
-import { useCallback } from "react";
+import type { IQuizTest } from "../model/types/quiz-session.types";
+import { QuizMiniStat } from "./components/quiz-mini-stat";
 
-export const StartScreen: React.FC = () => {
-  const { dispatch, state } = useQuiz();
+interface IProps {
+  quiz: IQuizTest;
+  onStart: () => void;
+}
 
-  const maxScore = state.quiz?.questions.reduce(
-    (sum, q) => sum + (q.points ?? 0),
+export const TestStartScreen: React.FC<IProps> = ({ quiz, onStart }) => {
+  const maxScore = quiz.questions.reduce(
+    (sum, question) => sum + (question.points ?? 0),
     0,
   );
-  const timedCount = state.quiz?.questions.filter((q) => q.timeLimit).length;
-
-  const start = useCallback(() => {
-    dispatch(startQuiz());
-  }, [dispatch]);
+  const timedCount = quiz.questions.filter((question) => question.timeLimit).length;
 
   return (
     <div className="w-full min-w-0">
@@ -27,31 +24,31 @@ export const StartScreen: React.FC = () => {
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ui-text)] mt-5">
-          {state.quiz?.title}
+          {quiz.title}
         </h1>
         <p className="text-sm text-[var(--ui-text-muted)] mt-2 leading-relaxed max-w-md mx-auto">
-          {state.quiz?.description}
+          {quiz.description}
         </p>
 
         <div className="flex justify-center gap-10 mt-5">
-          <MiniStat
+          <QuizMiniStat
             icon={FaList}
-            value={state.quiz?.questions.length || 0}
+            value={quiz.questions.length}
             label="Вопросов"
           />
-          {state.quiz?.settings.isScore && (
-            <MiniStat
-              icon={FaStar}
-              value={maxScore || 0}
-              label="Макс. баллов"
-            />
+          {quiz.settings.isScore && (
+            <QuizMiniStat icon={FaStar} value={maxScore} label="Макс. баллов" />
           )}
-          <MiniStat icon={FaClock} value={timedCount || 0} label="С таймером" />
+          <QuizMiniStat
+            icon={FaClock}
+            value={timedCount}
+            label="С таймером"
+          />
         </div>
 
         <button
           type="button"
-          onClick={start}
+          onClick={onStart}
           className="
             mt-8 inline-flex items-center justify-center gap-2.5
             px-5 py-2 text-base font-bold rounded-xl
@@ -64,7 +61,7 @@ export const StartScreen: React.FC = () => {
           Начать тест
         </button>
 
-        {(timedCount || 0) > 0 && (
+        {timedCount > 0 && (
           <p className="text-[11px] text-[var(--ui-text-muted)] mt-4">
             При истечении времени вопрос автоматически засчитывается как не
             отвеченный и пропускается

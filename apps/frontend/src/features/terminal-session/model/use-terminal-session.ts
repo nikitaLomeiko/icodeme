@@ -21,8 +21,8 @@ const getMutationErrorMessage = (error: unknown, fallback: string) =>
 export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
   const projectIdRef = useRef(generateId());
   const containerIdRef = useRef<string | null>(null);
-  const startedRuntimeRef = useRef<string | null>(null);
   const attemptRef = useRef(0);
+  const latestInputRef = useRef({ step, study });
   const [retryCount, setRetryCount] = useState(0);
   const [containerId, setContainerId] = useState<string | null>(null);
   const [terminalTicket, setTerminalTicket] = useState<string | null>(null);
@@ -37,127 +37,138 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
     setContainerId(id);
   }, []);
 
+  const runtimeId =
+    study && step?.type === "terminal" && step.id
+      ? `${study._id}:${step.id}`
+      : null;
+
   useEffect(() => {
-    if (!study || step?.type !== "terminal" || !step.id) return;
+    latestInputRef.current = { step, study };
+  }, [step, study]);
 
-    const runtimeId = `${study._id}:${step.id}`;
-    if (startedRuntimeRef.current === runtimeId) return;
-    startedRuntimeRef.current = runtimeId;
+  useEffect(() => {
+    if (!runtimeId) return;
     const attempt = ++attemptRef.current;
+    const isCurrent = () => attemptRef.current === attempt;
 
-    const previousContainerId = containerIdRef.current;
-    if (previousContainerId) {
-      containerIdRef.current = null;
-      void stopContainer({ containerId: previousContainerId });
-    }
-    setContainerId(null);
-    setTerminalTicket(null);
-    setTerminalError(null);
-    setIsStarting(true);
-
-    void createContainer({
-      project: {
-        _id: projectIdRef.current,
-        userId: study.userId,
-        meta: {
-          name:
-            step.settings?.initProject?.name ??
-            `terminal-${study._id}-${step.id}`,
-          title: step.settings?.initProject?.title ?? step.title,
-          subtitle:
-            step.settings?.initProject?.subtitle ?? step.description ?? "",
-          language: step.settings?.language ?? "bash",
+    // Strict Mode mounts, cleans up, and mounts effects again in development.
+    // Defer the request so the first setup can be cancelled before it starts.
+    const launchTimer = window.setTimeout(() => {
+      if (!isCurrent()) return;
+      const { study, step } = latestInputRef.current;
+      if (!study || !step?.id || `${study._id}:${step.id}` !== runtimeId)
+        return;
+      setContainerId(null);
+      setTerminalTicket(null);
+      setTerminalError(null);
+      setIsStarting(true);
+      const now = new Date();
+      void createContainer({
+        project: {
+          _id: projectIdRef.current,
+          userId: study.userId,
+          meta: {
+            name:
+              step.settings?.initProject?.name ??
+              `terminal-${study._id}-${step.id}`,
+            title: step.settings?.initProject?.title ?? step.title,
+            subtitle:
+              step.settings?.initProject?.subtitle ?? step.description ?? "",
+            language: step.settings?.language ?? "bash",
+          },
+          dir: [],
+          createdAt: now,
+          updatedAt: now,
         },
-        dir: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      stepId: step.id,
-    })
-      .then(async (result) => {
-        if (attemptRef.current !== attempt) {
-          if (result.data?.data?.containerId)
-            void stopContainer({ containerId: result.data.data.containerId });
-          return;
-        }
-        if (result.error) {
-          setTerminalError(
-            getMutationErrorMessage(
-              result.error,
-              "Не удалось запустить Linux-контейнер.",
-            ),
-          );
-          return;
-        }
+        stepId: step.id,
+      })
+        .then(async (result) => {
+          if (!isCurrent()) {
+            if (result.data?.data?.containerId)
+              void stopContainer({ containerId: result.data.data.containerId });
+            return;
+          }
+          if (result.error) {
+            setTerminalError(
+              getMutationErrorMessage(
+                result.error,
+                "Не удалось запустить Linux-контейнер.",
+              ),
+            );
+            return;
+          }
 
-        const runtime = result.data?.data;
-        if (!runtime?.containerId) {
-          setTerminalError("Сервер не вернул идентификатор контейнера.");
-          return;
-        }
-        if (startedRuntimeRef.current !== runtimeId) {
-          void stopContainer({ containerId: runtime.containerId });
-          return;
-        }
+          const runtime = result.data?.data;
+          if (!runtime?.containerId) {
+            setTerminalError("Сервер не вернул идентификатор контейнера.");
+            return;
+          }
+          updateContainerId(runtime.containerId);
+          const ticketResult = await createTerminalTicket({
+            containerId: runtime.containerId,
+          });
+          if (!isCurrent()) {
+            void stopContainer({ containerId: runtime.containerId });
+            return;
+          }
+          if (ticketResult.error) {
+            setTerminalError(
+              getMutationErrorMessage(
+                ticketResult.error,
+                "Не удалось подключить терминал.",
+              ),
+            );
+            await stopContainer({ containerId: runtime.containerId });
+            updateContainerId(null);
+            return;
+          }
 
-        updateContainerId(runtime.containerId);
-        const ticketResult = await createTerminalTicket({
-          containerId: runtime.containerId,
+          const ticket = ticketResult.data?.data?.ticket;
+          if (!ticket) {
+            setTerminalError("Сервер не выдал временный билет терминала.");
+            await stopContainer({ containerId: runtime.containerId });
+            updateContainerId(null);
+            return;
+          }
+          setTerminalTicket(ticket);
+        })
+        .catch((cause: unknown) => {
+          if (isCurrent())
+            setTerminalError(
+              cause instanceof Error
+                ? cause.message
+                : "Не удалось запустить Linux-контейнер.",
+            );
+        })
+        .finally(() => {
+          if (isCurrent()) setIsStarting(false);
         });
-        if (attemptRef.current !== attempt) {
-          void stopContainer({ containerId: runtime.containerId });
-          return;
-        }
-        if (ticketResult.error) {
-          setTerminalError(
-            getMutationErrorMessage(
-              ticketResult.error,
-              "Не удалось подключить терминал.",
-            ),
-          );
-          await stopContainer({ containerId: runtime.containerId });
-          updateContainerId(null);
-          return;
-        }
+    }, 0);
 
-        const ticket = ticketResult.data?.data?.ticket;
-        if (!ticket) {
-          setTerminalError("Сервер не выдал временный билет терминала.");
-          await stopContainer({ containerId: runtime.containerId });
-          updateContainerId(null);
-          return;
-        }
-        setTerminalTicket(ticket);
-      })
-      .catch((cause: unknown) => {
-        if (attemptRef.current === attempt)
-          setTerminalError(
-            cause instanceof Error
-              ? cause.message
-              : "Не удалось запустить Linux-контейнер.",
-          );
-      })
-      .finally(() => {
-        if (attemptRef.current === attempt) setIsStarting(false);
-      });
+    return () => {
+      window.clearTimeout(launchTimer);
+      attemptRef.current += 1;
+      const currentId = containerIdRef.current;
+      if (!currentId) return;
+      containerIdRef.current = null;
+      void stopContainer({ containerId: currentId });
+    };
   }, [
     createContainer,
     createTerminalTicket,
-    step,
     stopContainer,
-    study,
+    runtimeId,
     updateContainerId,
     retryCount,
   ]);
 
   const retry = useCallback(() => {
-    attemptRef.current += 1;
-    startedRuntimeRef.current = null;
     setRetryCount((count) => count + 1);
   }, []);
 
   useEffect(() => {
     const stopActiveContainer = () => {
+      attemptRef.current += 1;
       const currentId = containerIdRef.current;
       if (!currentId) return;
       containerIdRef.current = null;
@@ -166,12 +177,7 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
 
     window.addEventListener("pagehide", stopActiveContainer);
     return () => {
-      attemptRef.current += 1;
       window.removeEventListener("pagehide", stopActiveContainer);
-      const currentId = containerIdRef.current;
-      if (!currentId) return;
-      containerIdRef.current = null;
-      void stopContainer({ containerId: currentId });
     };
   }, [stopContainer]);
 

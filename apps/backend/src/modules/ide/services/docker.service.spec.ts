@@ -238,6 +238,100 @@ describe('DockerService runtime lifecycle', () => {
     );
   });
 
+  it('waits for a concurrent Docker removal and completes local cleanup', async () => {
+    const { calls, storage } = storageFixture();
+    const { service } = serviceFixture(storage);
+    const containerId = '4'.repeat(64);
+    const runtimeKey = '5'.repeat(40);
+    const inspect = jest
+      .fn()
+      .mockResolvedValueOnce({
+        Config: {
+          Labels: {
+            'project.user': project.userId,
+            'project.runtime': runtimeKey,
+          },
+        },
+      })
+      .mockRejectedValueOnce({ statusCode: 404 });
+    service.docker = {
+      getContainer: () => ({
+        id: containerId,
+        inspect,
+        stop: async () => undefined,
+        remove: async () => {
+          throw {
+            statusCode: 409,
+            message: `removal of container ${containerId} is already in progress`,
+          };
+        },
+      }),
+    };
+
+    const result = await service.stopContainer(containerId);
+
+    expect(result.success).toBe(true);
+    expect(inspect).toHaveBeenCalledTimes(2);
+    expect(calls).toContainEqual(
+      expect.stringMatching(new RegExp(`delete:.*${runtimeKey}$`)),
+    );
+  });
+
+  it('replaces a runtime after Docker reports its old container is being removed', async () => {
+    const { storage } = storageFixture();
+    const { service } = serviceFixture(storage);
+    const runtimeKey = '6'.repeat(40);
+    const oldContainerId = '7'.repeat(64);
+    const newContainer = {
+      id: '8'.repeat(64),
+      start: async () => undefined,
+      inspect: async () => ({ Image: `sha256:${'9'.repeat(64)}` }),
+    };
+    const inspectOld = jest
+      .fn()
+      .mockResolvedValueOnce({
+        Config: {
+          Labels: {
+            'project.user': project.userId,
+            'project.runtime': runtimeKey,
+          },
+        },
+      })
+      .mockRejectedValueOnce({ statusCode: 404 });
+    const createContainer = jest.fn(async () => newContainer);
+    service.docker = {
+      listContainers: async () => [
+        {
+          Id: oldContainerId,
+          Names: [`/icodeme-runtime-${runtimeKey}`],
+          State: 'exited',
+        },
+      ],
+      getContainer: () => ({
+        id: oldContainerId,
+        inspect: inspectOld,
+        remove: async () => {
+          throw {
+            statusCode: 409,
+            message: `removal of container ${oldContainerId} is already in progress`,
+          };
+        },
+      }),
+      createContainer,
+      listImages: async () => [],
+    };
+
+    const result = await service.createAndStartContainer(
+      'icodeme-runtime-test:latest',
+      project,
+      runtimeKey,
+    );
+
+    expect(result).toBe(newContainer);
+    expect(inspectOld).toHaveBeenCalledTimes(2);
+    expect(createContainer).toHaveBeenCalledTimes(1);
+  });
+
   it('limits simultaneous image builds and queues the remaining work', async () => {
     const coordinator = new DockerRuntimeCoordinator() as any;
     coordinator.maxConcurrentBuilds = 2;

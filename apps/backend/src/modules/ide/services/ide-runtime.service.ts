@@ -36,7 +36,7 @@ export class IdeRuntimeService {
       userId,
     );
     if (!step) throw new NotFoundException('Шаг не найден');
-    if (!['code', 'terminal', 'exam'].includes(step.type)) {
+    if (!['code', 'terminal'].includes(step.type)) {
       throw new BadRequestException('Для этого шага запуск кода недоступен');
     }
 

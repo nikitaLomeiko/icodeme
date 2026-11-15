@@ -135,7 +135,7 @@ export class TypeGuards {
       value.description.trim().length > 0 &&
       value.description.length <= 2000 &&
       typeof value.type === 'string' &&
-      ['document', 'code', 'test', 'exam'].includes(value.type) &&
+      ['document', 'code', 'test'].includes(value.type) &&
       typeof value.experience === 'number' &&
       Number.isFinite(value.experience) &&
       value.experience >= 0 &&

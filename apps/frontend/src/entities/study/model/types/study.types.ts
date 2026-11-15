@@ -1,4 +1,4 @@
-import { IQuiz } from "./quiz.types";
+import type { IQuiz } from "@/entities/quiz";
 
 export interface IStudyProjectMeta {
   name: string;
@@ -56,7 +56,6 @@ export interface IStep extends INotation {
   document?: string;
   code?: string;
   quiz?: IQuiz;
-  exam?: IQuiz;
   settings: ISettings;
 }
 
@@ -78,9 +77,7 @@ export type StepType =
   | "document"
   | "code"
   | "terminal"
-  | "quiz"
-  | "test"
-  | "exam";
+  | "test";
 
 export interface INotation {
   title: string;

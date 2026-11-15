@@ -51,20 +51,19 @@ export interface ISettings {
 }
 
 export interface IGeneratedStep extends INotation {
-  type: 'document' | 'code' | 'test' | 'exam';
+  type: 'document' | 'code' | 'test';
   experience: number;
 }
 
 export interface IStep extends INotation {
   id: string;
-  type: 'document' | 'code' | 'quiz' | 'test' | 'exam' | 'terminal';
+  type: 'document' | 'code' | 'test' | 'terminal';
   isCompleted: boolean;
   isCurrent: boolean;
   document?: string;
   position: { x: number; y: number };
   code?: string;
   quiz?: IQuiz;
-  exam?: IQuiz;
   settings: ISettings;
   experience?: number;
 }

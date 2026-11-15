@@ -4,10 +4,10 @@ import {
   FaQuestionCircle,
   FaTimesCircle,
 } from "react-icons/fa";
-import { QuestionState } from "../types";
+import type { QuizQuestionState } from "../../model/types/quiz-session.types";
 
-export const stateMeta: Record<
-  QuestionState,
+export const quizResultMeta: Record<
+  QuizQuestionState,
   { label: string; icon: React.ComponentType<{ size?: number }>; chip: string }
 > = {
   correct: {

@@ -67,52 +67,58 @@ export const InteractiveTerminal: React.FC<IProps> = ({
     requestAnimationFrame(fitTerminal);
     terminal.onResize(sendResize);
 
+    let connectTimer: number | undefined;
     if (ticket) {
-      const parsedBaseUrl = new URL(baseUrl);
-      const basePath = parsedBaseUrl.pathname.endsWith("/")
-        ? parsedBaseUrl.pathname
-        : `${parsedBaseUrl.pathname}/`;
-      const url = new URL(
-        "ide/docker/terminal",
-        `${parsedBaseUrl.origin}${basePath}`,
-      );
-      url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-      url.searchParams.set("ticket", ticket);
-      socket = new WebSocket(url);
-      socket.onopen = () => {
-        fitTerminal();
-        terminal.focus();
-      };
-      socket.onmessage = (event) => {
-        if (typeof event.data === "string") terminal.write(event.data);
-        else if (event.data instanceof ArrayBuffer) {
-          terminal.write(new Uint8Array(event.data));
-        }
-      };
-      socket.onerror = () => {
-        terminal.write(
-          "\r\n\x1b[31mWebSocket handshake failed. Check the backend logs and proxy Upgrade forwarding.\x1b[0m\r\n",
+      // A terminal ticket is single use. Strict Mode replays effects during
+      // development, so the first setup must not consume the ticket.
+      connectTimer = window.setTimeout(() => {
+        const parsedBaseUrl = new URL(baseUrl, window.location.href);
+        const basePath = parsedBaseUrl.pathname.endsWith("/")
+          ? parsedBaseUrl.pathname
+          : `${parsedBaseUrl.pathname}/`;
+        const url = new URL(
+          "ide/docker/terminal",
+          `${parsedBaseUrl.origin}${basePath}`,
         );
-      };
-      socket.onclose = (event) => {
-        if (event.code !== 1000) {
+        url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+        url.searchParams.set("ticket", ticket);
+        socket = new WebSocket(url);
+        socket.onopen = () => {
+          fitTerminal();
+          terminal.focus();
+        };
+        socket.onmessage = (event) => {
+          if (typeof event.data === "string") terminal.write(event.data);
+          else if (event.data instanceof ArrayBuffer) {
+            terminal.write(new Uint8Array(event.data));
+          }
+        };
+        socket.onerror = () => {
           terminal.write(
-            event.code === 4008
-              ? "\r\n\x1b[33mВремя выполнения истекло.\x1b[0m\r\n"
-              : `\r\n\x1b[33mTerminal connection closed (${event.code}).\x1b[0m\r\n`,
+            "\r\n\x1b[31mНе удалось подключиться к терминалу по WebSocket.\x1b[0m\r\n",
           );
-        }
-      };
-      terminal.onData((data) => {
-        if (socket?.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "input", data }));
-        }
-      });
+        };
+        socket.onclose = (event) => {
+          if (event.code !== 1000) {
+            terminal.write(
+              event.code === 4008
+                ? "\r\n\x1b[33mВремя выполнения истекло.\x1b[0m\r\n"
+                : `\r\n\x1b[33mСоединение терминала закрыто (${event.code}).\x1b[0m\r\n`,
+            );
+          }
+        };
+        terminal.onData((data) => {
+          if (socket?.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "input", data }));
+          }
+        });
+      }, 0);
     } else {
       terminal.write(initialOutput || "Terminal session finished.");
     }
 
     return () => {
+      window.clearTimeout(connectTimer);
       resizeObserver.disconnect();
       socket?.close(1000, "Terminal view closed");
       terminal.dispose();

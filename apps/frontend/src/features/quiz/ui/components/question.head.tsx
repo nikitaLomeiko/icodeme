@@ -1,6 +1,6 @@
 import { FaList, FaPencilAlt, FaStar } from "react-icons/fa";
 import { TimerRing } from "./timer.ring";
-import { pointsLabel } from "../../model/libs/utils";
+import { quizPointsLabel as pointsLabel } from "@/entities/quiz/model/utils/quiz-answer-format";
 import { QuestionType } from "../../model/types";
 
 interface IProps {

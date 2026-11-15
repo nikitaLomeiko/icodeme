@@ -6,7 +6,7 @@ interface IProps {
   color: string;
 }
 
-export const ResultStat: React.FC<IProps> = ({ label, value, color }) => (
+export const QuizResultStat: React.FC<IProps> = ({ label, value, color }) => (
   <div className="bg-[var(--ui-background)] border border-[var(--ui-border)] rounded-xl p-2">
     <p className="text-xl font-bold" style={{ color }}>
       {value}

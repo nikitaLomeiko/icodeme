@@ -1,8 +1,11 @@
 import type {
   IQuestion as StudyQuestion,
   IQuiz as StudyQuiz,
-} from "@/entities/study";
-import type { IQuestion, ITest } from "@/features/quiz";
+} from "@/entities/quiz";
+import type {
+  IQuizSessionQuestion as IQuestion,
+  IQuizTest as ITest,
+} from "@/entities/quiz";
 
 function adaptQuestion(question: StudyQuestion, index: number): IQuestion {
   const base = {

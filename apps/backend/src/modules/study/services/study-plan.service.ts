@@ -13,7 +13,10 @@ import type {
   GenerateStepsDto,
   SubmitQuizDto,
 } from '../dto/study.dto';
-import { createTestStudyModule } from '../factories/test-study-module.factory';
+import {
+  createInteractiveTestQuiz,
+  createTestStudyModule,
+} from '../factories/test-study-module.factory';
 import { StudyService } from './study.service';
 import { StudyGenerationService } from './study-generation.service';
 import { runtimeForStudy } from './study-runtime-config';
@@ -41,7 +44,74 @@ export class StudyPlanService {
       throw new NotFoundException('Учебный план не найден');
     }
 
-    return result.data;
+    return this.normalizeLegacyStepTypes(userId, result.data);
+  }
+
+  private async normalizeLegacyStepTypes(
+    userId: string,
+    study: IStudy,
+  ): Promise<IStudy> {
+    type LegacyStep = Omit<IStep, 'type'> & {
+      type: string;
+      exam?: IQuiz;
+    };
+
+    const hasLegacyTypes = study.studyPlanJSON.some((module) =>
+      module.levels.some((level) =>
+        level.steps.some((step) => {
+          const legacyStep = step as unknown as LegacyStep;
+          return (
+            legacyStep.type === 'quiz' ||
+            legacyStep.type === 'exam' ||
+            Boolean(legacyStep.exam)
+          );
+        }),
+      ),
+    );
+    if (!hasLegacyTypes) return study;
+
+    const normalizedPlan = study.studyPlanJSON.map((module) => ({
+      ...module,
+      levels: module.levels.map((level) => ({
+        ...level,
+        steps: level.steps.map((step) => {
+          const legacyStep = step as unknown as LegacyStep;
+          if (
+            legacyStep.type !== 'quiz' &&
+            legacyStep.type !== 'exam' &&
+            !legacyStep.exam
+          )
+            return step;
+
+          const { exam, ...canonicalStep } = legacyStep;
+          return {
+            ...canonicalStep,
+            type:
+              legacyStep.type === 'quiz' || legacyStep.type === 'exam'
+                ? 'test'
+                : legacyStep.type,
+            quiz: canonicalStep.quiz ?? exam,
+          } as IStep;
+        }),
+      })),
+    }));
+    const updatedAt = new Date();
+    const updated = await this.studyService.replaceStudyPlanIfUnchanged(
+      userId,
+      study._id,
+      study.updatedAt,
+      normalizedPlan,
+      updatedAt,
+    );
+    if (updated) {
+      return { ...study, studyPlanJSON: normalizedPlan, updatedAt };
+    }
+
+    const latest = await this.studyService.getStudyByIdAndUserId(
+      study._id,
+      userId,
+    );
+    return latest.success && latest.data ? latest.data : study;
   }
 
   async addInitialTestModule(
@@ -57,9 +127,35 @@ export class StudyPlanService {
       throw new BadRequestException(
         'Тестовый модуль доступен только при первоначальной настройке',
       );
-    const current = studies.data[0];
-    if (current.studyPlanJSON.length > 0)
-      return { success: true, data: current };
+    const current = await this.getStudy(userId, studyId);
+    if (current.studyPlanJSON.length > 0) {
+      const hasTest = current.studyPlanJSON.some((module) =>
+        module.levels.some((level) =>
+          level.steps.some((step) => step.type === 'test'),
+        ),
+      );
+      if (!hasTest) {
+        const firstLevel = current.studyPlanJSON[0]?.levels[0];
+        if (firstLevel) {
+          const quiz = createInteractiveTestQuiz();
+          const y =
+            Math.max(-320, ...firstLevel.steps.map((step) => step.position.y)) +
+            320;
+          await this.studyService.addTestStepIfMissing(userId, studyId, {
+            id: randomUUID(),
+            title: 'Пробный тест: основы Python',
+            description: quiz.description,
+            type: 'test',
+            quiz,
+            isCompleted: false,
+            isCurrent: false,
+            position: { x: 50, y },
+            settings: { startCommand: [] },
+          });
+        }
+      }
+      return { success: true, data: await this.getStudy(userId, studyId) };
+    }
     await this.studyService.setModulesIfEmpty(userId, studyId, [
       createTestStudyModule(),
     ]);
@@ -170,9 +266,7 @@ export class StudyPlanService {
     const runtime = runtimeForStudy(study.study.context);
     if (
       !runtime &&
-      generated.data.some(
-        (step) => step.type === 'code' || step.type === 'exam',
-      )
+      generated.data.some((step) => step.type === 'code')
     )
       throw new BadRequestException(
         'Для языка этого плана пока недоступна среда выполнения',
@@ -183,8 +277,7 @@ export class StudyPlanService {
       isCompleted: false,
       isCurrent: stepIndex === 0,
       position: { x: 50, y: stepIndex * 320 },
-      settings:
-        step.type === 'code' || step.type === 'exam' ? { ...runtime } : {},
+      settings: step.type === 'code' ? { ...runtime } : {},
     }));
     if (
       !(await this.studyService.setStepsIfEmpty(
@@ -231,9 +324,9 @@ export class StudyPlanService {
       this.getLevel(this.getModule(study, data.moduleIndex), data.levelIndex),
       data.stepIndex,
     );
-    if (!['quiz', 'test', 'exam'].includes(step.type))
+    if (step.type !== 'test')
       throw new BadRequestException('Шаг не является тестом');
-    const quiz = step.quiz ?? step.exam;
+    const quiz = step.quiz;
     if (!quiz?.questions.length)
       throw new BadRequestException('Тест не найден');
     if (

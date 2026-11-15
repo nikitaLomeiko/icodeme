@@ -1,12 +1,22 @@
 "use client";
 
 import { useGetStudyByIdQuery } from "@/entities/study";
+import type { IStep, IStudy } from "@/entities/study";
 
 export interface StudyStepParams {
   studyId?: string;
   moduleIndex?: string;
   levelIndex?: string;
   stepIndex?: string;
+}
+
+export interface StudyStepPageData {
+  params: StudyStepParams;
+  isValid: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  study?: IStudy;
+  step?: IStep;
 }
 
 export function useStudyStep(params: StudyStepParams) {
@@ -32,8 +42,9 @@ export function useStudyStep(params: StudyStepParams) {
   return {
     ...query,
     isValid,
-    isLoading: query.isLoading || query.isFetching,
-    isError: query.isError || query.data?.success === false,
+    // Keep the current step mounted while RTK Query refreshes stale study data.
+    isLoading: query.isLoading,
+    isError: (query.isError && !query.data) || query.data?.success === false,
     study,
     step,
   };

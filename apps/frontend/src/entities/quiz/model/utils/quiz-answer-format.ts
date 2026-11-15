@@ -1,11 +1,14 @@
-import { AnswerValue, IQuestion } from "../../types/types";
+import type {
+  IQuizSessionQuestion,
+  QuizAnswerValue,
+} from "../types/quiz-session.types";
 
-export const optionLabel = (question: IQuestion, id: string) =>
+const optionLabel = (question: IQuizSessionQuestion, id: string) =>
   question.options?.find((option) => option.id === id)?.label ?? id;
 
-export const formatUserAnswer = (
-  question: IQuestion,
-  answer?: AnswerValue,
+export const formatQuizUserAnswer = (
+  question: IQuizSessionQuestion,
+  answer?: QuizAnswerValue,
 ): string => {
   if (!answer) return "—";
   if (Array.isArray(answer)) {
@@ -17,7 +20,9 @@ export const formatUserAnswer = (
   return answer;
 };
 
-export const formatCorrectAnswer = (question: IQuestion): string => {
+export const formatQuizCorrectAnswer = (
+  question: IQuizSessionQuestion,
+): string => {
   if (question.type === "fields") {
     return (
       question.fields?.map((field) => field.correct.join(" / ")).join("; ") ??
@@ -31,7 +36,7 @@ export const formatCorrectAnswer = (question: IQuestion): string => {
   return question.correct.join(" / ");
 };
 
-export const pointsLabel = (points: number): string => {
+export const quizPointsLabel = (points: number): string => {
   if (points % 10 === 1 && points % 100 !== 11) return "балл";
   if (
     points % 10 >= 2 &&

@@ -8,7 +8,7 @@ interface IProps {
   label: string;
 }
 
-export const MiniStat: React.FC<IProps> = ({ icon, value, label }) => (
+export const QuizMiniStat: React.FC<IProps> = ({ icon, value, label }) => (
   <div className="bg-[var(--ui-background)] border border-[var(--ui-border)] rounded-xl p-4">
     <div className="flex items-center justify-center gap-1.5 text-[var(--ui-primary)]">
       {createElement(icon, { size: 13 })}

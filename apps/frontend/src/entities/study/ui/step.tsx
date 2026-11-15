@@ -31,7 +31,7 @@ export const Step: React.FC<IProps> = (props) => {
   } = props;
 
   const pos = getStepPosition(position, stepNumber - 1);
-  const Icon = stepIcons[type];
+  const Icon = stepIcons[type] ?? stepIcons.test;
   const label = getStepLabel(type);
   const palette = getStepPalette(type);
   const isLocked = !isCompleted && !isCurrent;
