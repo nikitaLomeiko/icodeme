@@ -1,18 +1,13 @@
 "use client";
 
-import {
-  Button,
-  InputWithSuggestions,
-  Notification,
-  Title,
-} from "@/shared/ui/kit";
+import { Button, InputWithSuggestions, Notification } from "@/shared/ui/kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { FaPlus } from "react-icons/fa";
 import { LanguageAddFormData, languageAddSchema } from "../model/validate";
 import { programmingLanguages } from "../model/data/language.data";
-import { useAddNewLanguageMutation } from "@/entities/study";
+import { useCreateStudyMutation } from "@/entities/study";
 import { isApiError } from "@/shared/api";
 
 interface IProps {
@@ -24,14 +19,14 @@ interface IProps {
 export const LanguageAddForm: React.FC<IProps> = (props) => {
   const { initLanguage = "", onCancel, onSuccess } = props;
 
-  const [create] = useAddNewLanguageMutation();
+  const [createStudy] = useCreateStudyMutation();
   const [error, setError] = useState<string | null>(null);
 
   const {
     handleSubmit,
+    control,
     reset,
     setValue,
-    watch,
     formState: { errors, isSubmitting, isDirty, isValid },
   } = useForm<LanguageAddFormData>({
     resolver: zodResolver(languageAddSchema),
@@ -41,7 +36,7 @@ export const LanguageAddForm: React.FC<IProps> = (props) => {
     mode: "onChange",
   });
 
-  const languageValue = watch("language");
+  const languageValue = useWatch({ control, name: "language" });
 
   useEffect(() => {
     reset({
@@ -52,16 +47,20 @@ export const LanguageAddForm: React.FC<IProps> = (props) => {
   const onSubmit = async (data: LanguageAddFormData) => {
     try {
       setError(null);
-      const result = await create(data.language);
+      const result = await createStudy(data.language);
 
-      if (result.error && isApiError(result.error)) {
-        setError(result.error.data.message);
+      if (result.error || result.data?.success !== true) {
+        setError(
+          result.error && isApiError(result.error)
+            ? result.error.data.message
+            : "Не удалось добавить язык. Повторите попытку.",
+        );
         return;
       }
 
       onSuccess(data.language);
-    } catch (error) {
-      console.error("Failed to add language:", error);
+    } catch {
+      setError("Не удалось добавить язык. Повторите попытку.");
     }
   };
 

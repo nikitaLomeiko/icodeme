@@ -6,7 +6,7 @@ import {
   Module,
   setStudyPlans,
   setStudyView,
-  useGetMyStudyQuery,
+  useGetStudiesQuery,
 } from "@/entities/study";
 import { useAppDispatch } from "@/shared/lib";
 import { StudyNav } from "./study.nav";
@@ -31,7 +31,7 @@ const isModuleCompleted = (module: {
 export const StudyMap: React.FC = () => {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { data, isLoading, isError } = useGetMyStudyQuery(null);
+  const { data, isLoading, isError } = useGetStudiesQuery(null);
   const studies = data?.data ?? [];
   const selectedStudyId = searchParams.get("studyId");
   const selectedStudy =

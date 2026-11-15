@@ -5,7 +5,7 @@ import {
   useCreateAndRunContainerMutation,
   useCreateTerminalTicketMutation,
   useStopContainerMutation,
-} from "@/features/ide";
+} from "@/entities/ide";
 import type { IStep, IStudy } from "@/entities/study";
 import { isApiError } from "@/shared/api";
 import { generateId } from "@/shared/lib";
@@ -22,6 +22,8 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
   const projectIdRef = useRef(generateId());
   const containerIdRef = useRef<string | null>(null);
   const startedRuntimeRef = useRef<string | null>(null);
+  const attemptRef = useRef(0);
+  const [retryCount, setRetryCount] = useState(0);
   const [containerId, setContainerId] = useState<string | null>(null);
   const [terminalTicket, setTerminalTicket] = useState<string | null>(null);
   const [terminalError, setTerminalError] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
     const runtimeId = `${study._id}:${step.id}`;
     if (startedRuntimeRef.current === runtimeId) return;
     startedRuntimeRef.current = runtimeId;
+    const attempt = ++attemptRef.current;
 
     const previousContainerId = containerIdRef.current;
     if (previousContainerId) {
@@ -72,6 +75,11 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
       stepId: step.id,
     })
       .then(async (result) => {
+        if (attemptRef.current !== attempt) {
+          if (result.data?.data?.containerId)
+            void stopContainer({ containerId: result.data.data.containerId });
+          return;
+        }
         if (result.error) {
           setTerminalError(
             getMutationErrorMessage(
@@ -96,6 +104,10 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
         const ticketResult = await createTerminalTicket({
           containerId: runtime.containerId,
         });
+        if (attemptRef.current !== attempt) {
+          void stopContainer({ containerId: runtime.containerId });
+          return;
+        }
         if (ticketResult.error) {
           setTerminalError(
             getMutationErrorMessage(
@@ -117,8 +129,16 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
         }
         setTerminalTicket(ticket);
       })
+      .catch((cause: unknown) => {
+        if (attemptRef.current === attempt)
+          setTerminalError(
+            cause instanceof Error
+              ? cause.message
+              : "Не удалось запустить Linux-контейнер.",
+          );
+      })
       .finally(() => {
-        if (startedRuntimeRef.current === runtimeId) setIsStarting(false);
+        if (attemptRef.current === attempt) setIsStarting(false);
       });
   }, [
     createContainer,
@@ -127,7 +147,14 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
     stopContainer,
     study,
     updateContainerId,
+    retryCount,
   ]);
+
+  const retry = useCallback(() => {
+    attemptRef.current += 1;
+    startedRuntimeRef.current = null;
+    setRetryCount((count) => count + 1);
+  }, []);
 
   useEffect(() => {
     const stopActiveContainer = () => {
@@ -139,6 +166,7 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
 
     window.addEventListener("pagehide", stopActiveContainer);
     return () => {
+      attemptRef.current += 1;
       window.removeEventListener("pagehide", stopActiveContainer);
       const currentId = containerIdRef.current;
       if (!currentId) return;
@@ -147,5 +175,5 @@ export function useTerminalSession({ step, study }: UseTerminalSessionParams) {
     };
   }, [stopContainer]);
 
-  return { containerId, isStarting, terminalError, terminalTicket };
+  return { containerId, isStarting, terminalError, terminalTicket, retry };
 }

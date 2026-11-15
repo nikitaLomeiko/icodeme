@@ -1,5 +1,5 @@
 import { achievementsData, useGetProfileQuery } from "@/entities/profile";
-import { useGetMyStudyQuery } from "@/entities/study";
+import { useGetStudiesQuery } from "@/entities/study";
 import { AchievementCarousel } from "@/widgets/achievement-view";
 import { AboutView, ProfileView } from "@/widgets/profile-view";
 import { StudyList } from "@/widgets/study-view";
@@ -8,12 +8,10 @@ import { useRouter } from "next/navigation";
 export const ProfilePage: React.FC = () => {
   const router = useRouter();
   const { data: profile } = useGetProfileQuery(null);
-  const { data: study } = useGetMyStudyQuery(null);
+  const { data: studies } = useGetStudiesQuery(null);
 
-  if (!profile?.data || !study?.data) {
+  if (!profile?.data || !studies?.data) {
     return null;
-
-    // исправить
   }
 
   return (
@@ -40,7 +38,7 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         <div className="space-y-4 sm:space-y-6">
-          <StudyList list={study.data} />
+          <StudyList list={studies.data} />
         </div>
       </div>
     </>

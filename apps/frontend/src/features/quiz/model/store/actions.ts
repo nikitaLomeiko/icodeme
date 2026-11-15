@@ -5,6 +5,7 @@ export {
   goToQuestion,
   loadQuiz,
   markSkipped,
+  expireQuestion,
   resetQuiz,
   restartQuiz,
   selectOption,
@@ -12,6 +13,7 @@ export {
   setQuiz,
   setTextAnswer,
   setTimeLeft,
+  setDeadline,
   skipQuestion,
   startQuiz,
 } from "./quiz.slice";

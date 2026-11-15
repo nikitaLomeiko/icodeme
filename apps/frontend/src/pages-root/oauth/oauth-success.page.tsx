@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useOAuthSession } from "@/entities/auth/model/hooks/use-oauth-session";
+import { useOAuthSession } from "@/entities/auth";
 import { useLazyGetProfileQuery } from "@/entities/profile";
+import { useLazyGetStudiesQuery } from "@/entities/study";
 import { isApiError } from "@/shared/api";
 import { Loader } from "@/shared/ui/kit";
 import { Suspense } from "react";
@@ -11,6 +12,7 @@ const OAuthSuccessContent: React.FC = () => {
   const router = useRouter();
   const verifySession = useOAuthSession();
   const [getProfile] = useLazyGetProfileQuery();
+  const [getStudies] = useLazyGetStudiesQuery();
   const started = useRef(false);
   const [error, setError] = useState("");
 
@@ -29,8 +31,13 @@ const OAuthSuccessContent: React.FC = () => {
 
       const profile = await getProfile(null, false);
 
-      if (profile.data?.success) router.replace("/profile");
-      else if (
+      if (profile.data?.success) {
+        const studies = await getStudies(null, false);
+        if (studies.data?.data?.some((study) => study.studyPlanJSON.length > 0))
+          router.replace("/profile");
+        else if (studies.data?.success) router.replace("/auth/profile");
+        else setError("Вы вошли в аккаунт, но учебный план не загрузился.");
+      } else if (
         profile.error &&
         isApiError(profile.error) &&
         profile.error.status === 404
@@ -38,7 +45,7 @@ const OAuthSuccessContent: React.FC = () => {
         router.replace("/auth/profile");
       else setError("Вы вошли в аккаунт, но загрузить профиль не удалось.");
     })();
-  }, [getProfile, router, verifySession]);
+  }, [getProfile, getStudies, router, verifySession]);
 
   return error ? (
     <div role="alert" className="p-6 text-center">

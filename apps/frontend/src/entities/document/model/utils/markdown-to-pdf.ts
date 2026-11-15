@@ -918,8 +918,8 @@ export const downloadMarkdownAsPdf = async (
       pageMargins: [40, 60, 40, 60],
       info: {
         title,
-        author: "Your App",
-        subject: "Markdown PDF Export",
+        author: "OctoMe",
+        subject: "Экспорт учебного материала в PDF",
       },
       header: {
         text: title,

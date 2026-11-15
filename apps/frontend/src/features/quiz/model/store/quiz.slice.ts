@@ -9,6 +9,7 @@ export const initialQuizState: IQuizState = {
   timeLeft: null,
   answers: {},
   skipped: {},
+  deadlines: {},
 };
 
 const getTimeLimit = (state: IQuizState, index: number) =>
@@ -44,6 +45,13 @@ const quizSlice = createSlice({
     setTimeLeft: (state, action: PayloadAction<number | null>) => {
       state.timeLeft = action.payload;
     },
+    setDeadline: (
+      state,
+      action: PayloadAction<{ questionId: string; deadline: number }>,
+    ) => {
+      if (state.deadlines[action.payload.questionId] === undefined)
+        state.deadlines[action.payload.questionId] = action.payload.deadline;
+    },
     startQuiz: (state) => {
       const quiz = state.quiz;
       Object.assign(state, initialQuizState, {
@@ -65,7 +73,12 @@ const quizSlice = createSlice({
     },
     goNextQuestion: (state) => {
       const question = state.quiz?.questions[state.currentIndex];
-      if (question && !isQuestionAnswered(state.answers, question.id)) {
+      if (
+        question &&
+        ((state.deadlines[question.id] !== undefined &&
+          Date.now() >= state.deadlines[question.id]) ||
+          !isQuestionAnswered(state.answers, question.id))
+      ) {
         skip(state, question.id);
       }
       advance(state);
@@ -78,6 +91,12 @@ const quizSlice = createSlice({
     markSkipped: (state, action: PayloadAction<string>) => {
       if (!state.skipped[action.payload]) skip(state, action.payload);
     },
+    expireQuestion: (state, action: PayloadAction<string>) => {
+      const question = state.quiz?.questions[state.currentIndex];
+      if (question?.id !== action.payload) return;
+      skip(state, question.id);
+      advance(state);
+    },
     skipQuestion: (state) => {
       const question = state.quiz?.questions[state.currentIndex];
       if (!question) return;
@@ -87,6 +106,11 @@ const quizSlice = createSlice({
     selectOption: (state, action: PayloadAction<string>) => {
       const question = state.quiz?.questions[state.currentIndex];
       if (!question || question.type !== "choice") return;
+      if (
+        state.deadlines[question.id] !== undefined &&
+        Date.now() >= state.deadlines[question.id]
+      )
+        return;
 
       if (state.skipped[question.id]) state.skipped[question.id] = false;
       if (question.multiple) {
@@ -102,6 +126,11 @@ const quizSlice = createSlice({
     setTextAnswer: (state, action: PayloadAction<string>) => {
       const question = state.quiz?.questions[state.currentIndex];
       if (!question || question.type !== "text") return;
+      if (
+        state.deadlines[question.id] !== undefined &&
+        Date.now() >= state.deadlines[question.id]
+      )
+        return;
       state.answers[question.id] = action.payload;
       if (state.skipped[question.id]) state.skipped[question.id] = false;
     },
@@ -118,6 +147,11 @@ const quizSlice = createSlice({
       ) {
         return;
       }
+      if (
+        state.deadlines[question.id] !== undefined &&
+        Date.now() >= state.deadlines[question.id]
+      )
+        return;
       const current = state.answers[question.id];
       const answer = Array.isArray(current) ? [...current] : [];
       answer[index] = value;
@@ -133,6 +167,7 @@ export const {
   resetQuiz,
   setQuiz,
   setTimeLeft,
+  setDeadline,
   startQuiz,
   restartQuiz,
   finishQuiz,
@@ -140,6 +175,7 @@ export const {
   goNextQuestion,
   goPrevQuestion,
   markSkipped,
+  expireQuestion,
   skipQuestion,
   selectOption,
   setTextAnswer,

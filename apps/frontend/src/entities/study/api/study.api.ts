@@ -7,7 +7,7 @@ export const studyApi = createApi({
   baseQuery: fetchBase,
   tagTypes: ["Study"],
   endpoints: (build) => ({
-    createNewStudy: build.mutation<IResponse<IStudy>, string>({
+    createStudy: build.mutation<IResponse<IStudy>, string>({
       query: (context) => ({
         url: "study/me",
         method: "POST",
@@ -15,52 +15,43 @@ export const studyApi = createApi({
       }),
       invalidatesTags: ["Study"],
     }),
-    getMyStudy: build.query<IResponse<IStudy[]>, null>({
+    getStudies: build.query<IResponse<IStudy[]>, null>({
       query: () => ({
         url: "study/me",
         method: "GET",
       }),
       providesTags: ["Study"],
     }),
-    getMyStudyById: build.query<IResponse<IStudy>, string>({
+    getStudyById: build.query<IResponse<IStudy>, string>({
       query: (id) => ({
         url: `study/me/${encodeURIComponent(id)}`,
         method: "GET",
       }),
       providesTags: ["Study"],
     }),
-    addNewLanguage: build.mutation<IResponse<IStudy>, string>({
-      query: (language) => ({
-        url: "study/me",
-        method: "POST",
-        body: { programmingLanguage: language },
-      }),
-      invalidatesTags: ["Study"],
-    }),
     deleteStudy: build.mutation<IResponse<void>, string>({
       query: (id) => ({
-        url: `study/me/${id}`,
+        url: `study/me/${encodeURIComponent(id)}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Study"],
     }),
-    testGenerateModuleByStudyId: build.mutation<IResponse<void>, string>({
+    addInitialTestModule: build.mutation<IResponse<IStudy>, string>({
       query: (studyId) => ({
         url: "study/test/modules",
         method: "POST",
         body: { studyId },
-        invalidatesTags: ["Study"],
       }),
+      invalidatesTags: ["Study"],
     }),
   }),
 });
 
 export const {
-  useGetMyStudyQuery,
-  useGetMyStudyByIdQuery,
-  useLazyGetMyStudyQuery,
-  useAddNewLanguageMutation,
+  useGetStudiesQuery,
+  useGetStudyByIdQuery,
+  useLazyGetStudiesQuery,
   useDeleteStudyMutation,
-  useCreateNewStudyMutation,
-  useTestGenerateModuleByStudyIdMutation,
+  useCreateStudyMutation,
+  useAddInitialTestModuleMutation,
 } = studyApi;

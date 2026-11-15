@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 interface IProps {
   className?: string;
@@ -94,10 +95,13 @@ export const Logotype: React.FC<IProps> = (props) => {
       className={`p-2 flex ${!isMobile && "flex-col"} items-center gap-1 ${className}`}
     >
       {showLogotype ? (
-        <img
+        <Image
           onClick={handleClickLogo}
           src={`/logo/${anim}`}
-          alt="logotype"
+          alt="Логотип OctoMe"
+          width={152}
+          height={152}
+          unoptimized
           className={`${isMobile ? "w-14 h-14" : "w-38 h-38"} cursor-pointer`}
         />
       ) : null}

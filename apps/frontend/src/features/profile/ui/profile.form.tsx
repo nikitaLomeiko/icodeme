@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import React, { useEffect } from "react";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NameStep, AvatarStep, AboutStep, ChatStep } from "./steps";
 import { StepWrapper } from "./components/step.wrapper";
@@ -18,9 +18,15 @@ interface IProps {
   onSubmit: (data: ProfileFormData) => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  initialValues?: Partial<ProfileFormData>;
 }
 
-export const ProfileForm: React.FC<IProps> = ({ onSubmit, isLoading, error }) => {
+export const ProfileForm: React.FC<IProps> = ({
+  onSubmit,
+  isLoading,
+  error,
+  initialValues,
+}) => {
   const methods = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: "onBlur",
@@ -32,7 +38,19 @@ export const ProfileForm: React.FC<IProps> = ({ onSubmit, isLoading, error }) =>
     },
   });
 
+  const { reset } = methods;
+  useEffect(() => {
+    if (initialValues)
+      reset(
+        { name: "", avatar: "", bio: "", info: "", ...initialValues },
+        { keepDirtyValues: true },
+      );
+  }, [initialValues, reset]);
+
   const { handleSubmit, getFieldState } = methods;
+  const name = useWatch({ control: methods.control, name: "name" });
+  const avatar = useWatch({ control: methods.control, name: "avatar" });
+  const bio = useWatch({ control: methods.control, name: "bio" });
   const manageProfileForm = useProfileForm({
     methods,
     totalSteps: totalSteps,
@@ -43,7 +61,7 @@ export const ProfileForm: React.FC<IProps> = ({ onSubmit, isLoading, error }) =>
       case 0:
         return (
           <NameStep
-            value={methods.watch("name")}
+            value={name}
             onChange={(value) => methods.setValue("name", value)}
             error={getFieldState("name").error?.message}
           />
@@ -52,7 +70,7 @@ export const ProfileForm: React.FC<IProps> = ({ onSubmit, isLoading, error }) =>
       case 1:
         return (
           <AvatarStep
-            value={methods.watch("avatar")}
+            value={avatar}
             onChange={(value) => methods.setValue("avatar", value)}
             error={getFieldState("avatar").error?.message}
           />
@@ -61,7 +79,7 @@ export const ProfileForm: React.FC<IProps> = ({ onSubmit, isLoading, error }) =>
       case 2:
         return (
           <AboutStep
-            value={methods.watch("bio")}
+            value={bio}
             onChange={(value) => methods.setValue("bio", value)}
             error={getFieldState("bio").error?.message}
           />

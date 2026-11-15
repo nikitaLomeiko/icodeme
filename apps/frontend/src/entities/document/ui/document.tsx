@@ -26,16 +26,19 @@ export const Document: React.FC<IProps> = observer((props) => {
   const [getFavorite] = useLazyGetDocumentFavoriteQuery();
 
   useEffect(() => {
+    let current = true;
+    setLineFavorites([]);
     const fetch = async () => {
       const result = await getFavorite({ documentId });
-
-      if (result.data) {
+      if (current && result.data) {
         setLineFavorites(result.data.data?.links || []);
       }
     };
-
-    fetch();
-  }, [documentId]);
+    void fetch();
+    return () => {
+      current = false;
+    };
+  }, [documentId, getFavorite, setLineFavorites]);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -43,15 +46,18 @@ export const Document: React.FC<IProps> = observer((props) => {
     setContentRef(contentRef);
     setContent(content);
     setDocumentId(documentId);
-  }, [contentRef]);
+  }, [content, documentId, setContent, setContentRef, setDocumentId]);
 
   const markdown = useMemo(
     () => (
-      <div className={`prose prose-invert prose-lg max-w-none ${className ?? ""}`} ref={contentRef}>
+      <div
+        className={`prose prose-invert prose-lg max-w-none ${className ?? ""}`}
+        ref={contentRef}
+      >
         <Markdown fontSize={fontSize} content={content} />
       </div>
     ),
-    [fontSize, content],
+    [fontSize, content, className],
   );
 
   return <article aria-label={title}>{markdown}</article>;

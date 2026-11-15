@@ -4,30 +4,23 @@ import { Logotype } from "@/shared/ui/logotype";
 import { Tab } from "./ui/tab";
 import { ITab } from "../../model/types/tab.type";
 import { Title } from "@/shared/ui/kit";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FaChevronLeft, FaChevronRight, FaCog } from "react-icons/fa";
+import { getTabHref, isTabActive } from "../../model/lib/tab-navigation";
 
 interface IProps {
   tabs: ITab[];
-  defaultSelectedId: string;
-  onSelectTab: (id: string) => void;
   isCollapsed: boolean;
   onToggleCollapsed: () => void;
 }
 
 export const Sidebar: React.FC<IProps> = (props) => {
-  const {
-    tabs,
-    defaultSelectedId,
-    onSelectTab,
-    isCollapsed,
-    onToggleCollapsed,
-  } = props;
+  const { tabs, isCollapsed, onToggleCollapsed } = props;
 
-  const [tabSelectedId, setTabSelectedId] = useState(defaultSelectedId);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleTabSetSelectedId = (id: string) => {
     if (id === "Other") {
@@ -36,16 +29,12 @@ export const Sidebar: React.FC<IProps> = (props) => {
     }
 
     setIsMoreOpen(false);
-    router.push(id);
-    setTabSelectedId(id);
-    onSelectTab(id);
+    router.push(getTabHref(id));
   };
 
   const openSettings = () => {
     setIsMoreOpen(false);
-    setTabSelectedId("Other");
     router.push("/settings");
-    onSelectTab("/settings");
   };
 
   return (
@@ -77,7 +66,7 @@ export const Sidebar: React.FC<IProps> = (props) => {
                   {...tab}
                   onActive={() => handleTabSetSelectedId(tab.id)}
                   isActive={
-                    tab.id === tabSelectedId ||
+                    isTabActive(pathname, tab.id) ||
                     (tab.id === "Other" && isMoreOpen)
                   }
                   isCollapsed={isCollapsed}
@@ -108,7 +97,7 @@ export const Sidebar: React.FC<IProps> = (props) => {
             className={`border-t border-[var(--ui-border)] text-xs text-[var(--ui-text)] ${isCollapsed ? "p-2 text-center" : "p-4"}`}
           >
             <Title size="xs" as="p">
-              {isCollapsed ? "©" : "© 2026 Your App"}
+              {isCollapsed ? "©" : "© OctoMe"}
             </Title>
           </div>
         </div>

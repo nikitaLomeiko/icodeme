@@ -231,3 +231,11 @@
 [00:41:57.024] Browser LOG     1238
 [00:41:57.024] Browser LOG     1238
 [00:41:57.024] Browser LOG     1238
+[10:05:05.544] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[10:05:06.153] Browser WARN    Image with src "/logo/logo.gif" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[10:05:08.976] Browser WARN    Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[10:05:40.287] Browser LOG     0
+[10:05:40.287] Browser LOG     0
+[10:05:40.287] Browser LOG     31
+[10:05:40.287] Browser LOG     31

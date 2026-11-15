@@ -3,17 +3,16 @@
 import { ITab } from "../../model/types/tab.type";
 import { Tab } from "./ui/tab.mobile";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FaCog } from "react-icons/fa";
+import { getTabHref, isTabActive } from "../../model/lib/tab-navigation";
 
 interface IProps {
   tabs: ITab[];
-  defaultSelectedId: string;
-  onSelectTab: (id: string) => void;
 }
 
 export const Navbar: React.FC<IProps> = (props) => {
-  const { defaultSelectedId, onSelectTab, tabs } = props;
+  const { tabs } = props;
 
   const centerIndex = Math.floor(tabs.length / 2);
   const homeTab = tabs.find((tab) => tab.id === "/");
@@ -22,9 +21,9 @@ export const Navbar: React.FC<IProps> = (props) => {
   if (homeTab) {
     mobileTabs.splice(centerIndex, 0, homeTab);
   }
-  const [tabSelectedId, setTabSelectedId] = useState(defaultSelectedId);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleTabSetSelectedId = (id: string) => {
     if (id === "Other") {
@@ -33,15 +32,11 @@ export const Navbar: React.FC<IProps> = (props) => {
     }
 
     setIsMoreOpen(false);
-    setTabSelectedId(id);
-    onSelectTab(id);
-    router.push(id.startsWith("/") ? id : `/${id}`);
+    router.push(getTabHref(id));
   };
 
   const openSettings = () => {
     setIsMoreOpen(false);
-    setTabSelectedId("Other");
-    onSelectTab("/settings");
     router.push("/settings");
   };
 
@@ -62,7 +57,8 @@ export const Navbar: React.FC<IProps> = (props) => {
       <div className="bg-[var(--ui-background-secondary)] rounded-3xl flex items-center justify-between px-4 py-3 mx-2 min-w-[326px] relative">
         {mobileTabs.map((tab, index) => {
           const isCenter = index === centerIndex;
-          const isActive = tab.id === tabSelectedId;
+          const isActive =
+            isTabActive(pathname, tab.id) || (tab.id === "Other" && isMoreOpen);
 
           return (
             <div key={tab.id} className={isCenter ? "relative -mt-10" : ""}>
@@ -70,7 +66,7 @@ export const Navbar: React.FC<IProps> = (props) => {
                 {...tab}
                 onActive={() => handleTabSetSelectedId(tab.id)}
                 isCenter={isCenter}
-                isActive={isActive || (tab.id === "Other" && isMoreOpen)}
+                isActive={isActive}
               />
             </div>
           );

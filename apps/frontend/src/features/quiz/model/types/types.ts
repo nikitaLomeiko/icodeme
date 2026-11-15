@@ -69,6 +69,7 @@ export interface IQuizState {
   timeLeft: number | null;
   answers: Record<string, AnswerValue>;
   skipped: Record<string, boolean>;
+  deadlines: Record<string, number>;
 }
 
 export interface IQuizProgressState {

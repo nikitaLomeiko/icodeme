@@ -23,6 +23,7 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 export const useIde = ({ meta, userId, stepId }: IIdeControllerProps) => {
   const projectIdRef = useRef(generateId());
   const activeContainerIdRef = useRef<string | null>(null);
+  const runGenerationRef = useRef(0);
   const [isTerminalVisible, setTerminalVisible] = useState(false);
   const [isStarting, setStarting] = useState(false);
   const [terminalTicket, setTerminalTicket] = useState<string | null>(null);
@@ -49,12 +50,14 @@ export const useIde = ({ meta, userId, stepId }: IIdeControllerProps) => {
 
     window.addEventListener("pagehide", handlePageHide);
     return () => {
+      runGenerationRef.current += 1;
       window.removeEventListener("pagehide", handlePageHide);
       stopActiveContainer();
     };
   }, [stopActiveContainer]);
 
   const closeTerminal = useCallback(() => {
+    runGenerationRef.current += 1;
     setTerminalVisible(false);
     setTerminalTicket(null);
     stopActiveContainer();
@@ -62,6 +65,8 @@ export const useIde = ({ meta, userId, stepId }: IIdeControllerProps) => {
 
   const handleRun = useCallback(
     async (files: FileNode[]) => {
+      const generation = ++runGenerationRef.current;
+      const isCurrent = () => runGenerationRef.current === generation;
       setTerminalVisible(true);
       setStarting(true);
       setTerminalTicket(null);
@@ -81,6 +86,12 @@ export const useIde = ({ meta, userId, stepId }: IIdeControllerProps) => {
         },
         stepId,
       });
+
+      if (!isCurrent()) {
+        const staleId = result.data?.data?.containerId;
+        if (staleId) void stopContainer({ containerId: staleId });
+        return;
+      }
 
       if (result.error) {
         setTerminalError(
@@ -107,6 +118,10 @@ export const useIde = ({ meta, userId, stepId }: IIdeControllerProps) => {
       }
 
       const ticketResult = await createTerminalTicket({ containerId });
+      if (!isCurrent()) {
+        void stopContainer({ containerId });
+        return;
+      }
       if (ticketResult.error) {
         setTerminalError(
           getErrorMessage(
@@ -136,6 +151,7 @@ export const useIde = ({ meta, userId, stepId }: IIdeControllerProps) => {
       meta,
       stepId,
       stopActiveContainer,
+      stopContainer,
       userId,
     ],
   );

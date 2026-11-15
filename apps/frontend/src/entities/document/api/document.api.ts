@@ -22,11 +22,11 @@ export const documentApi = createApi({
       }),
     }),
     getDocumentFavorite: build.query<
-      IResponse<IFavorite>,
+      IResponse<IFavorite | null>,
       IGetDocumentFavoriteParams
     >({
       query: (params) => ({
-        url: `profiles/me/storage/document/favorite?documentId=${params.documentId}`,
+        url: `profiles/me/storage/document/favorite?documentId=${encodeURIComponent(params.documentId)}`,
         method: "GET",
       }),
     }),

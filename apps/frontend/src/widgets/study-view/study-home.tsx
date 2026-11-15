@@ -10,7 +10,7 @@ import {
   selectViewedModuleIndex,
   setStudyPlans,
   setStudyView,
-  useGetMyStudyQuery,
+  useGetStudiesQuery,
 } from "@/entities/study";
 import { useAppDispatch, useAppSelector } from "@/shared/lib";
 import { StudyModuleMap } from "./study-module-map";
@@ -20,7 +20,7 @@ import { WorkZone } from "./work-zone";
 export const StudyHome: React.FC = () => {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { data, isLoading, isError } = useGetMyStudyQuery(null);
+  const { data, isLoading, isError } = useGetStudiesQuery(null);
   const studyId = searchParams.get("studyId");
   const moduleIndex = Number(searchParams.get("moduleIndex"));
   const studies = useAppSelector(selectStudyPlans);

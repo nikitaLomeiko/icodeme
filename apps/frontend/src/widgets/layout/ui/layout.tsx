@@ -67,8 +67,6 @@ export const Layout: React.FC<IProps> = ({
         <>
           {isRenderSideBar && (
             <Sidebar
-              defaultSelectedId={tabs[0].id}
-              onSelectTab={console.log}
               tabs={tabs}
               isCollapsed={isSidebarCollapsed}
               onToggleCollapsed={() =>
@@ -79,11 +77,7 @@ export const Layout: React.FC<IProps> = ({
         </>
       ) : (
         <div className="fixed bottom-0 left-0 right-0 z-50">
-          <Navbar
-            defaultSelectedId={tabs[0].id}
-            tabs={tabs}
-            onSelectTab={console.log}
-          />
+          <Navbar tabs={tabs} />
         </div>
       )}
     </div>

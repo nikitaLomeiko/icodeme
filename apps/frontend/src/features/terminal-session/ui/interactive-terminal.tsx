@@ -97,7 +97,9 @@ export const InteractiveTerminal: React.FC<IProps> = ({
       socket.onclose = (event) => {
         if (event.code !== 1000) {
           terminal.write(
-            `\r\n\x1b[33mTerminal connection closed (${event.code}).\x1b[0m\r\n`,
+            event.code === 4008
+              ? "\r\n\x1b[33mВремя выполнения истекло.\x1b[0m\r\n"
+              : `\r\n\x1b[33mTerminal connection closed (${event.code}).\x1b[0m\r\n`,
           );
         }
       };
