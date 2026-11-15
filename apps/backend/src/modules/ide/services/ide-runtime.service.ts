@@ -35,14 +35,14 @@ export class IdeRuntimeService {
       data.stepId,
       userId,
     );
-    if (!step) throw new NotFoundException('Step not found');
+    if (!step) throw new NotFoundException('Шаг не найден');
     if (!['code', 'terminal', 'exam'].includes(step.type)) {
-      throw new BadRequestException('Step cannot run code');
+      throw new BadRequestException('Для этого шага запуск кода недоступен');
     }
 
     const dockerFile = step.settings?.dockerFile;
     if (typeof dockerFile !== 'string' || !dockerFile.trim()) {
-      throw new BadRequestException('Step has no Dockerfile');
+      throw new BadRequestException('Для шага не задан Dockerfile');
     }
     const startCommand = step.settings?.startCommand;
     if (
@@ -50,7 +50,7 @@ export class IdeRuntimeService {
       startCommand.length === 0 ||
       startCommand.some((part) => typeof part !== 'string' || !part.trim())
     ) {
-      throw new BadRequestException('Step has no start command');
+      throw new BadRequestException('Для шага не задана команда запуска');
     }
 
     const project: IProject = {
@@ -73,17 +73,16 @@ export class IdeRuntimeService {
       data.stepId,
       step.settings.memoryLimitMb,
       true,
+      step.settings.timeLimitMs,
     );
     if (result.success) return result;
     if (result.error === DockerError.RUNTIME_CAPACITY_REACHED) {
       throw new HttpException(
-        'All code execution slots are currently in use. Try again shortly.',
+        'Все слоты запуска кода заняты. Повторите попытку позже.',
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-    throw new BadRequestException(
-      'An error occurred while attempting to start the container',
-    );
+    throw new BadRequestException('Не удалось запустить контейнер');
   }
 
   async createTerminalTicket(
@@ -110,7 +109,7 @@ export class IdeRuntimeService {
       data.input,
     );
     if (!result.success) {
-      throw new BadRequestException('Failed to send input to the container');
+      throw new BadRequestException('Не удалось отправить ввод в контейнер');
     }
     return result;
   }
@@ -120,11 +119,11 @@ export class IdeRuntimeService {
     const result = await this.dockerService.stopContainer(data.containerId);
     if (result.success) return result;
     if (result.error === DockerError.CONTAINER_NOT_FOUND) {
-      throw new NotFoundException('Container not found');
+      throw new NotFoundException('Контейнер не найден');
     }
     if (result.error === DockerError.INVALID_CONTAINER_ID) {
-      throw new BadRequestException('Invalid container id');
+      throw new BadRequestException('Некорректный идентификатор контейнера');
     }
-    throw new BadRequestException('Failed to stop the container');
+    throw new BadRequestException('Не удалось остановить контейнер');
   }
 }

@@ -1,7 +1,8 @@
-import { IsInt, IsString, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from 'class-validator';
 
 export class CreateStudyDto {
   @IsString()
+  @IsNotEmpty()
   @MaxLength(4000)
   context: string;
 }

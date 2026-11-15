@@ -11,13 +11,17 @@ import type { IGeneratedStep } from '../models/study.model';
 import { isRecord } from '@core/types/guards/is-record';
 
 export class TypeGuards {
+  private static bounded(value: unknown, max: number): value is string {
+    return typeof value === 'string' && value.length <= max;
+  }
+
   static isVariant(value: unknown): value is IVariant {
     if (!isRecord(value)) return false;
 
     return (
       typeof value.char === 'string' &&
       /^[A-Z]$/.test(value.char) &&
-      typeof value.content === 'string' &&
+      this.bounded(value.content, 2000) &&
       typeof value.isTrue === 'boolean'
     );
   }
@@ -26,10 +30,11 @@ export class TypeGuards {
     if (!isRecord(value)) return false;
 
     return (
-      typeof value.label === 'string' &&
-      typeof value.input === 'string' &&
+      this.bounded(value.label, 200) &&
+      this.bounded(value.input, 2000) &&
       Array.isArray(value.correct) &&
-      value.correct.every((item) => typeof item === 'string')
+      value.correct.length <= 20 &&
+      value.correct.every((item) => this.bounded(item, 2000))
     );
   }
 
@@ -37,11 +42,13 @@ export class TypeGuards {
     if (!isRecord(value)) return false;
 
     return (
-      typeof value.code === 'string' &&
+      this.bounded(value.code, 10000) &&
       Array.isArray(value.correctCode) &&
-      value.correctCode.every((item) => typeof item === 'string') &&
+      value.correctCode.length <= 20 &&
+      value.correctCode.every((item) => this.bounded(item, 10000)) &&
       Array.isArray(value.correctResult) &&
-      value.correctResult.every((item) => typeof item === 'string')
+      value.correctResult.length <= 20 &&
+      value.correctResult.every((item) => this.bounded(item, 2000))
     );
   }
 
@@ -56,14 +63,14 @@ export class TypeGuards {
   static isQuestionError(value: unknown): value is IQuestionError {
     if (!isRecord(value)) return false;
 
-    return typeof value.message === 'string';
+    return this.bounded(value.message, 2000);
   }
 
   static isQuestion(value: unknown): value is IQuestion {
     if (!isRecord(value)) return false;
 
-    if (typeof value.title !== 'string' || !value.title.trim()) return false;
-    if (typeof value.description !== 'string' || !value.description.trim())
+    if (!this.bounded(value.title, 200) || !value.title.trim()) return false;
+    if (!this.bounded(value.description, 2000) || !value.description.trim())
       return false;
 
     if (typeof value.type !== 'string') return false;
@@ -71,6 +78,7 @@ export class TypeGuards {
       return false;
 
     if (!Array.isArray(value.errors)) return false;
+    if (value.errors.length > 20) return false;
     if (!value.errors.every((error) => this.isQuestionError(error)))
       return false;
 
@@ -79,6 +87,7 @@ export class TypeGuards {
         return (
           Array.isArray(value.variants) &&
           value.variants.length > 0 &&
+          value.variants.length <= 20 &&
           value.variants.every((variant) => this.isVariant(variant))
         );
 
@@ -86,6 +95,7 @@ export class TypeGuards {
         return (
           Array.isArray(value.inputs) &&
           value.inputs.length > 0 &&
+          value.inputs.length <= 20 &&
           value.inputs.every((input) => this.isInput(input))
         );
 
@@ -103,12 +113,13 @@ export class TypeGuards {
   static isQuiz(value: unknown): value is IQuiz {
     if (!isRecord(value)) return false;
 
-    if (typeof value.title !== 'string' || !value.title.trim()) return false;
-    if (typeof value.description !== 'string' || !value.description.trim())
+    if (!this.bounded(value.title, 200) || !value.title.trim()) return false;
+    if (!this.bounded(value.description, 2000) || !value.description.trim())
       return false;
 
     if (!Array.isArray(value.questions)) return false;
     if (value.questions.length === 0) return false;
+    if (value.questions.length > 50) return false;
 
     return value.questions.every((question) => this.isQuestion(question));
   }
@@ -119,19 +130,25 @@ export class TypeGuards {
     return (
       typeof value.title === 'string' &&
       value.title.trim().length > 0 &&
+      value.title.length <= 200 &&
       typeof value.description === 'string' &&
       value.description.trim().length > 0 &&
+      value.description.length <= 2000 &&
       typeof value.type === 'string' &&
       ['document', 'code', 'test', 'exam'].includes(value.type) &&
       typeof value.experience === 'number' &&
       Number.isFinite(value.experience) &&
-      value.experience >= 0
+      value.experience >= 0 &&
+      value.experience <= 10000
     );
   }
 
   static isGeneratedStepArray(value: unknown): value is IGeneratedStep[] {
     return (
-      Array.isArray(value) && value.every((step) => this.isGeneratedStep(step))
+      Array.isArray(value) &&
+      value.length > 0 &&
+      value.length <= 50 &&
+      value.every((step) => this.isGeneratedStep(step))
     );
   }
 }

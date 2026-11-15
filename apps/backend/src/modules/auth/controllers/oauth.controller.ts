@@ -97,12 +97,12 @@ export class OAuthController {
           Buffer.from(body.tgAuthResult, 'base64').toString('utf8'),
         ) as unknown;
       } catch {
-        throw new BadRequestException('Invalid Telegram payload');
+        throw new BadRequestException('Некорректные данные Telegram');
       }
     }
     const data = parseTelegramAuthData(source);
     if (!this.oauthService.verifyTelegramAuthData(data))
-      throw new UnauthorizedException('Invalid Telegram signature');
+      throw new UnauthorizedException('Некорректная подпись Telegram');
     const result = await this.oauthService.validateOrCreateTelegramUser(
       String(data.id),
       data.first_name,
@@ -111,7 +111,7 @@ export class OAuthController {
       data.photo_url,
     );
     if (!result.success || !result.data)
-      throw new UnauthorizedException('Telegram login failed');
+      throw new UnauthorizedException('Не удалось войти через Telegram');
     setSession(res, result.data);
     return res.json({ success: true, data: { userId: result.data.userId } });
   }

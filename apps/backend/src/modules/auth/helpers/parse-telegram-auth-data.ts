@@ -57,4 +57,4 @@ const toOptionalString = (value: unknown): string | undefined => {
 };
 
 const invalidPayload = (): BadRequestException =>
-  new BadRequestException('Invalid Telegram payload');
+  new BadRequestException('Некорректные данные Telegram');

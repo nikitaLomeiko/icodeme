@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as path from 'path';
+import { promises as fs, type Dirent } from 'fs';
 import { BaseFileStorage } from '@core/storage';
 import type { FileNode } from '@modules/project';
 
@@ -17,6 +18,31 @@ export class DockerWorkspaceService {
     return this.fileStorage.deleteDirAsync(
       this.getRuntimePath(userId, runtimeKey),
     );
+  }
+
+  async pruneOrphans(activeRuntimeKeys: Set<string>): Promise<void> {
+    let users: Dirent[];
+    try {
+      users = await fs.readdir(this.rootPath, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw error;
+    }
+    const olderThan = Date.now() - 24 * 60 * 60 * 1000;
+    for (const user of users) {
+      if (!user.isDirectory() || !/^[a-zA-Z0-9_.-]+$/.test(user.name)) continue;
+      const userPath = path.join(this.rootPath, user.name);
+      const runtimes = await fs.readdir(userPath, { withFileTypes: true });
+      for (const runtime of runtimes) {
+        if (!runtime.isDirectory() || !/^[a-f0-9]{40}$/.test(runtime.name))
+          continue;
+        if (activeRuntimeKeys.has(runtime.name)) continue;
+        const runtimePath = path.join(userPath, runtime.name);
+        const stat = await fs.stat(runtimePath);
+        if (stat.mtimeMs < olderThan)
+          await this.fileStorage.deleteDirAsync(runtimePath);
+      }
+    }
   }
 
   async syncProjectFiles(

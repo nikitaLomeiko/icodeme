@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Db } from 'mongodb';
+import { Db, MongoServerError } from 'mongodb';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 
@@ -56,9 +56,15 @@ export class OAuthService {
     name: string,
     picture?: string,
   ): Promise<IServiceResponse<ITokenResponse & IUserIdResponse, AuthError>> {
-    let user = await this.repositoryUser.findOne({ email });
+    email = email.trim().toLowerCase();
+    let user = await this.repositoryUser.findOne({ googleId });
 
     if (!user) {
+      const emailOwner = await this.repositoryUser.findOne(
+        { email },
+        { collation: { locale: 'en', strength: 2 } },
+      );
+      if (emailOwner) return { success: false, error: AuthError.USER_EXISTS };
       const now = new Date();
       const newUser: IUser = {
         _id: generateId(email),
@@ -73,7 +79,20 @@ export class OAuthService {
         updatedAt: now,
       };
 
-      const createdUserId = await this.repositoryUser.create(newUser);
+      let createdUserId: string;
+      try {
+        createdUserId = await this.repositoryUser.create(newUser);
+      } catch (error) {
+        if (error instanceof MongoServerError && error.code === 11000) {
+          const createdByAnotherRequest = await this.repositoryUser.findOne({
+            googleId,
+          });
+          if (createdByAnotherRequest?.provider === 'google')
+            return this.tokenHelper.issueTokens(createdByAnotherRequest);
+          return { success: false, error: AuthError.USER_EXISTS };
+        }
+        throw error;
+      }
 
       if (!createdUserId) {
         return {
@@ -83,21 +102,13 @@ export class OAuthService {
       }
 
       user = { ...newUser, _id: createdUserId };
-    } else if (
-      user.provider !== 'google' ||
-      (user.googleId !== googleId &&
-        user.googleId !== user.email &&
-        user.googleId !== user.picture?.split('/')[4])
-    ) {
+    } else if (user.provider !== 'google' || user.googleId !== googleId) {
       return {
         success: false,
         error: AuthError.USER_EXISTS,
       };
     }
 
-    if (user.googleId !== googleId) {
-      await this.repositoryUser.update({ _id: user._id }, { googleId });
-    }
     return this.tokenHelper.issueTokens(user);
   }
 
@@ -108,9 +119,15 @@ export class OAuthService {
     picture?: string,
     username?: string,
   ): Promise<IServiceResponse<ITokenResponse & IUserIdResponse, AuthError>> {
-    let user = await this.repositoryUser.findOne({ email });
+    email = email.trim().toLowerCase();
+    let user = await this.repositoryUser.findOne({ githubId });
 
     if (!user) {
+      const emailOwner = await this.repositoryUser.findOne(
+        { email },
+        { collation: { locale: 'en', strength: 2 } },
+      );
+      if (emailOwner) return { success: false, error: AuthError.USER_EXISTS };
       const now = new Date();
       const newUser: IUser = {
         _id: generateId(email),
@@ -126,7 +143,20 @@ export class OAuthService {
         updatedAt: now,
       };
 
-      const createdUserId = await this.repositoryUser.create(newUser);
+      let createdUserId: string;
+      try {
+        createdUserId = await this.repositoryUser.create(newUser);
+      } catch (error) {
+        if (error instanceof MongoServerError && error.code === 11000) {
+          const createdByAnotherRequest = await this.repositoryUser.findOne({
+            githubId,
+          });
+          if (createdByAnotherRequest?.provider === 'github')
+            return this.tokenHelper.issueTokens(createdByAnotherRequest);
+          return { success: false, error: AuthError.USER_EXISTS };
+        }
+        throw error;
+      }
 
       if (!createdUserId) {
         return {
@@ -154,7 +184,7 @@ export class OAuthService {
     photoUrl?: string,
   ): Promise<IServiceResponse<ITokenResponse & IUserIdResponse, AuthError>> {
     const email = username
-      ? `${username}@telegram.com`
+      ? `${username.toLowerCase()}@telegram.com`
       : `${telegramId}@telegram.com`;
     let user = await this.repositoryUser.findOne({ telegramId });
 
@@ -175,7 +205,20 @@ export class OAuthService {
         updatedAt: now,
       };
 
-      const createdUserId = await this.repositoryUser.create(newUser);
+      let createdUserId: string;
+      try {
+        createdUserId = await this.repositoryUser.create(newUser);
+      } catch (error) {
+        if (error instanceof MongoServerError && error.code === 11000) {
+          const createdByAnotherRequest = await this.repositoryUser.findOne({
+            telegramId,
+          });
+          if (createdByAnotherRequest?.provider === 'telegram')
+            return this.tokenHelper.issueTokens(createdByAnotherRequest);
+          return { success: false, error: AuthError.USER_EXISTS };
+        }
+        throw error;
+      }
 
       if (!createdUserId) {
         return {

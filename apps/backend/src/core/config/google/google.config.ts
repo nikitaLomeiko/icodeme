@@ -3,6 +3,6 @@ export default () => ({
   clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
   callbackURL:
     process.env.GOOGLE_CALLBACK_URL ||
-    'http://localhost:3000/auth/google/callback',
-  frontendURL: process.env.FRONTEND_URL || 'http://localhost:4200',
+    'http://localhost:3000/oauth/google/callback',
+  frontendURL: process.env.FRONTEND_URL || 'http://localhost:5173',
 });

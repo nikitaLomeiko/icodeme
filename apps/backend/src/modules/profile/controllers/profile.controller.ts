@@ -27,28 +27,28 @@ export class ProfileController {
   async getMyProfile(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<IControllerResponse<IProfile>> {
-    const result = await this.profileService.getProfileById(user.userId);
+    const result = await this.profileService.getProfileByUserId(user.userId);
 
     if (result.error === ProfileError.PROFILE_NOT_FOUND) {
-      throw new NotFoundException('Profile not found');
+      throw new NotFoundException('Профиль не найден');
     }
 
     return result;
   }
 
   @Post('me')
-  async createNewProfile(
+  async createMyProfile(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: CreateProfileDto,
   ): Promise<IControllerResponse<IProfile>> {
-    const result = await this.profileService.createNewProfile(user.userId, {
+    const result = await this.profileService.createProfile(user.userId, {
       ...data.profileData,
-      chips: ['test', 'test'],
-      position: 'Begginer',
+      chips: [],
+      position: 'Новичок',
     });
 
     if (!result.success) {
-      throw new BadRequestException('Error when creating a profile');
+      throw new BadRequestException('Не удалось создать профиль');
     }
 
     return result;
@@ -59,13 +59,13 @@ export class ProfileController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: UpdateProfileDto,
   ): Promise<IControllerResponse<IProfile>> {
-    const result = await this.profileService.changeProfileDataById(
+    const result = await this.profileService.updateProfileData(
       data.profileData,
       user.userId,
     );
 
     if (!result.success) {
-      throw new NotFoundException(result.error);
+      throw new NotFoundException('Профиль не найден');
     }
 
     return result;
@@ -75,10 +75,10 @@ export class ProfileController {
   async deleteMyProfile(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<IControllerResponse> {
-    const result = await this.profileService.removeProfileById(user.userId);
+    const result = await this.profileService.deleteProfileByUserId(user.userId);
 
     if (!result.success) {
-      throw new NotFoundException(result.error);
+      throw new NotFoundException('Профиль не найден');
     }
 
     return result;

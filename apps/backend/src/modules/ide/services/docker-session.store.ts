@@ -109,11 +109,14 @@ export class DockerSessionStore {
     });
   }
 
-  dispose(containerId: string): void {
+  dispose(containerId: string, timedOut = false): void {
     const session = this.sessions.get(containerId);
     if (session) {
       session.ended = true;
-      session.socket?.close(1000, 'Container stopped');
+      session.socket?.close(
+        timedOut ? 4008 : 1000,
+        timedOut ? 'Execution time limit exceeded' : 'Container stopped',
+      );
       session.stream.destroy();
     }
     this.sessions.delete(containerId);

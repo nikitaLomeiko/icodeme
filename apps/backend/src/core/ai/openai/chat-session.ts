@@ -21,27 +21,34 @@ export class ChatSession implements ChatSessionAbstract {
 
   setSystemPrompt(prompt: string): void {
     if (prompt !== '') {
-      this.history.push({
-        role: 'system',
-        content: prompt,
-      });
+      this.history = [
+        {
+          role: 'system',
+          content: prompt.slice(0, 4000),
+        },
+      ];
     }
   }
 
   async send(message: string): Promise<string> {
-    this.history.push({
-      role: 'user',
-      content: message,
-    });
+    if (Buffer.byteLength(message, 'utf8') > 64 * 1024)
+      throw new Error('AI prompt exceeds limit');
 
     const response = await this.openai.chat.completions.create({
       model: this.model,
-      messages: this.history,
+      messages: [
+        ...this.history.filter((entry) => entry.role === 'system').slice(-1),
+        { role: 'user', content: message },
+      ],
+      max_completion_tokens: 4096,
     });
 
-    const answer = response.choices[0].message.content;
+    const answer = response.choices[0]?.message?.content;
 
-    if (answer === null) {
+    if (
+      typeof answer !== 'string' ||
+      Buffer.byteLength(answer, 'utf8') > 128 * 1024
+    ) {
       throw new Error(`The model did not respond`);
     }
 
@@ -49,10 +56,16 @@ export class ChatSession implements ChatSessionAbstract {
   }
 
   getHistory(): IMessage[] {
-    return this.history;
+    return this.history.map((message) => ({ ...message }));
   }
 
   setHistory(messages: IMessage[]): void {
-    this.history = messages;
+    this.history = messages
+      .filter(
+        (message) =>
+          message.role === 'system' && message.content.length <= 4000,
+      )
+      .slice(-1)
+      .map((message) => ({ ...message }));
   }
 }

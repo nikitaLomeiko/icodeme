@@ -28,7 +28,7 @@ export class StudyController {
   constructor(private readonly studyPlanService: StudyPlanService) {}
 
   @Get('me')
-  getMyStudy(
+  getMyStudies(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<IControllerResponse<IStudy[]>> {
     return this.studyPlanService.getStudies(user.userId);
@@ -44,15 +44,18 @@ export class StudyController {
   }
 
   @Post('test/modules')
-  insertTestModule(
+  addInitialTestModule(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: StudyIdDto,
   ): Promise<IControllerResponse<IStudy>> {
-    return this.studyPlanService.insertTestModule(user.userId, data.studyId);
+    return this.studyPlanService.addInitialTestModule(
+      user.userId,
+      data.studyId,
+    );
   }
 
   @Post('me')
-  createNewStudy(
+  createMyStudy(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: CreateStudyDto,
   ): Promise<IControllerResponse<IStudy>> {
@@ -68,7 +71,7 @@ export class StudyController {
   }
 
   @Post('modules')
-  generateStudyModule(
+  generateModules(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: StudyIdDto,
   ): Promise<IControllerResponse<IModule[]>> {
@@ -76,7 +79,7 @@ export class StudyController {
   }
 
   @Post('levels')
-  generateStudyLevels(
+  generateLevels(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: GenerateLevelsDto,
   ): Promise<IControllerResponse<INotation[]>> {
@@ -84,7 +87,7 @@ export class StudyController {
   }
 
   @Post('steps')
-  generateStudySteps(
+  generateSteps(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: GenerateStepsDto,
   ): Promise<IControllerResponse<IStep[]>> {
@@ -92,7 +95,7 @@ export class StudyController {
   }
 
   @Post('steps/doc')
-  generateStepDocumentation(
+  generateDocumentation(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: GenerateStepContentDto,
   ): Promise<IControllerResponse<string>> {
@@ -100,7 +103,7 @@ export class StudyController {
   }
 
   @Post('steps/code')
-  generateStepPractice(
+  generatePractice(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: GenerateStepContentDto,
   ): Promise<IControllerResponse<string>> {
@@ -108,7 +111,7 @@ export class StudyController {
   }
 
   @Post('steps/quiz')
-  generateStepQuiz(
+  generateQuiz(
     @CurrentUser() user: AuthenticatedUser,
     @Body() data: GenerateStepContentDto,
   ): Promise<IControllerResponse<IQuiz>> {

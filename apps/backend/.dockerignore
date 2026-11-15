@@ -1,7 +1,9 @@
 node_modules
 dist
 coverage
-data
+data/*
+!data/prompts/
+!data/prompts/**
 .env
 .env.*
 *.log

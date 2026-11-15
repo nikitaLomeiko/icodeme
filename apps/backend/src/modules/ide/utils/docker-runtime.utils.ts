@@ -126,19 +126,3 @@ export const createOutputDecoder = (
     }
   };
 };
-
-export const getPortMapping = (
-  language: string,
-): { container: number; host: number } => {
-  const ports: Record<string, number> = {
-    node: 3000,
-    python: 5000,
-    go: 8080,
-    static: 80,
-  };
-
-  return {
-    container: ports[language] ?? 3000,
-    host: 30_000 + Math.floor(Math.random() * 1000),
-  };
-};

@@ -24,7 +24,7 @@ export class StudyPlanService {
   ) {}
 
   getStudies(userId: string): Promise<IControllerResponse<IStudy[]>> {
-    return this.studyService.getStudyByUserId(userId);
+    return this.studyService.getStudiesByUserId(userId);
   }
 
   async getStudy(userId: string, studyId: string): Promise<IStudy> {
@@ -34,38 +34,41 @@ export class StudyPlanService {
     );
 
     if (!result.success || !result.data) {
-      throw new NotFoundException('Study not found');
+      throw new NotFoundException('Учебный план не найден');
     }
 
     return result.data;
   }
 
-  async insertTestModule(
+  async addInitialTestModule(
     userId: string,
     studyId: string,
   ): Promise<IControllerResponse<IStudy>> {
-    const study = await this.getStudy(userId, studyId);
-    const result = await this.studyService.changeStudyPlanById(
-      [...study.studyPlanJSON, createTestStudyModule()],
-      studyId,
-    );
-
-    if (!result.success || !result.data) {
+    const studies = await this.getStudies(userId);
+    if (
+      !studies.data ||
+      studies.data.length !== 1 ||
+      studies.data[0]._id !== studyId
+    )
       throw new BadRequestException(
-        result.error ?? 'Failed to insert test module',
+        'Тестовый модуль доступен только при первоначальной настройке',
       );
-    }
-
-    return { success: true, data: result.data };
+    const current = studies.data[0];
+    if (current.studyPlanJSON.length > 0)
+      return { success: true, data: current };
+    await this.studyService.setModulesIfEmpty(userId, studyId, [
+      createTestStudyModule(),
+    ]);
+    return { success: true, data: await this.getStudy(userId, studyId) };
   }
 
   async createStudy(
     userId: string,
     context: string,
   ): Promise<IControllerResponse<IStudy>> {
-    const result = await this.studyService.createNewStudy(context, userId);
+    const result = await this.studyService.createStudy(context, userId);
     if (!result.success) {
-      throw new BadRequestException('Error when creating a study');
+      throw new BadRequestException('Не удалось создать учебный план');
     }
     return result;
   }
@@ -74,8 +77,11 @@ export class StudyPlanService {
     userId: string,
     studyId: string,
   ): Promise<IControllerResponse> {
-    const result = await this.studyService.removeStudyById(studyId, userId);
-    if (!result.success) throw new NotFoundException(result.error);
+    const result = await this.studyService.deleteStudyByIdAndUserId(
+      studyId,
+      userId,
+    );
+    if (!result.success) throw new NotFoundException('Учебный план не найден');
     return result;
   }
 
@@ -85,20 +91,19 @@ export class StudyPlanService {
   ): Promise<IControllerResponse<IModule[]>> {
     const study = await this.getStudy(userId, studyId);
     if (study.studyPlanJSON.length > 0) {
-      throw new BadRequestException('Study plan already formed');
+      throw new BadRequestException('Учебный план уже сформирован');
     }
 
     const generated = await this.generationService.generateModules(
       study.study.context,
     );
     if (!generated.success || !generated.data) {
-      throw new BadRequestException(
-        generated.error ?? 'Failed to generate modules',
-      );
+      throw new BadRequestException('Не удалось создать модули');
     }
 
     const modules = generated.data.map((module) => ({ ...module, levels: [] }));
-    await this.savePlan(studyId, modules);
+    if (!(await this.studyService.setModulesIfEmpty(userId, studyId, modules)))
+      throw new BadRequestException('Учебный план уже сформирован');
     return { success: true, data: modules };
   }
 
@@ -114,20 +119,24 @@ export class StudyPlanService {
     );
 
     if (!generated.success || !generated.data) {
-      throw new BadRequestException(
-        generated.error ?? 'Failed to generate levels',
-      );
+      throw new BadRequestException('Не удалось создать уровни');
     }
 
-    for (const level of generated.data) {
-      module.levels.push({
-        ...level,
-        isCompleted: false,
-        isCurrent: module.levels.length === 0,
-        steps: [],
-      });
-    }
-    await this.savePlan(data.studyId, study.studyPlanJSON);
+    const levels: ILevel[] = generated.data.map((level, index) => ({
+      ...level,
+      isCompleted: false,
+      isCurrent: index === 0,
+      steps: [],
+    }));
+    if (
+      !(await this.studyService.setLevelsIfEmpty(
+        userId,
+        data.studyId,
+        data.moduleIndex,
+        levels,
+      ))
+    )
+      throw new BadRequestException('Уровни уже созданы');
     return { success: true, data: generated.data };
   }
 
@@ -145,21 +154,27 @@ export class StudyPlanService {
     );
 
     if (!generated.success || !generated.data) {
-      throw new BadRequestException(
-        generated.error ?? 'Failed to generate steps',
-      );
+      throw new BadRequestException('Не удалось создать шаги');
     }
 
     const steps: IStep[] = generated.data.map((step, stepIndex) => ({
       ...step,
       id: randomUUID(),
       isCompleted: false,
-      isCurrent: level.steps.length === 0 && stepIndex === 0,
+      isCurrent: stepIndex === 0,
       position: { x: 50, y: stepIndex * 320 },
       settings: {},
     }));
-    level.steps.push(...steps);
-    await this.savePlan(data.studyId, study.studyPlanJSON);
+    if (
+      !(await this.studyService.setStepsIfEmpty(
+        userId,
+        data.studyId,
+        data.moduleIndex,
+        data.levelIndex,
+        steps,
+      ))
+    )
+      throw new BadRequestException('Шаги уже созданы');
     return { success: true, data: steps };
   }
 
@@ -217,15 +232,21 @@ export class StudyPlanService {
     );
 
     if (!generated.success || generated.data === undefined) {
-      throw new BadRequestException(
-        generated.error ?? `Failed to generate ${kind}`,
-      );
+      throw new BadRequestException('Не удалось создать содержимое шага');
     }
 
-    if (kind === 'quiz') step.quiz = generated.data as IQuiz;
-    else step[kind] = generated.data as string;
-
-    await this.savePlan(data.studyId, study.studyPlanJSON);
+    if (
+      !(await this.studyService.setStepContent(
+        userId,
+        data.studyId,
+        data.moduleIndex,
+        data.levelIndex,
+        data.stepIndex,
+        kind,
+        generated.data,
+      ))
+    )
+      throw new NotFoundException('Шаг не найден');
     return { success: true, data: generated.data };
   }
 
@@ -257,27 +278,19 @@ export class StudyPlanService {
 
   private getModule(study: IStudy, moduleIndex: number): IModule {
     const module = study.studyPlanJSON[moduleIndex];
-    if (!module) throw new NotFoundException('Module not found');
+    if (!module) throw new NotFoundException('Модуль не найден');
     return module;
   }
 
   private getLevel(module: IModule, levelIndex: number): ILevel {
     const level = module.levels[levelIndex];
-    if (!level) throw new NotFoundException('Level not found');
+    if (!level) throw new NotFoundException('Уровень не найден');
     return level;
   }
 
   private getStep(level: ILevel, stepIndex: number): IStep {
     const step = level.steps[stepIndex];
-    if (!step) throw new NotFoundException('Step not found');
+    if (!step) throw new NotFoundException('Шаг не найден');
     return step;
-  }
-
-  private async savePlan(studyId: string, modules: IModule[]): Promise<void> {
-    const result = await this.studyService.changeStudyPlanById(
-      modules,
-      studyId,
-    );
-    if (!result.success) throw new NotFoundException(result.error);
   }
 }

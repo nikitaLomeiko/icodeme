@@ -24,7 +24,7 @@ function stateGuard(provider: string) {
           expected.length !== 64 ||
           !timingSafeEqual(Buffer.from(expected), Buffer.from(actual))
         )
-          throw new UnauthorizedException('Invalid OAuth state');
+          throw new UnauthorizedException('Некорректное состояние OAuth');
         return { session: false };
       }
       const state = randomBytes(32).toString('hex');

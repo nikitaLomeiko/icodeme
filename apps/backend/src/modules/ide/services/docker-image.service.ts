@@ -37,12 +37,21 @@ export class DockerImageService {
   async removeImage(docker: Docker, imageName: string): Promise<void> {
     if (!imageName) return;
     try {
-      await docker.getImage(imageName).remove({ force: true });
+      await docker.getImage(imageName).remove({ force: false });
     } catch (error) {
       if (!isDockerNotFound(error)) {
         this.logger.error(`Image cleanup failed: ${getErrorMessage(error)}`);
       }
     }
+  }
+
+  async removeImageIfUnused(docker: Docker, imageId: string): Promise<void> {
+    if (!imageId) return;
+    const users = await docker.listContainers({
+      all: true,
+      filters: { ancestor: [imageId] },
+    });
+    if (users.length === 0) await this.removeImage(docker, imageId);
   }
 
   async removeObsoleteRuntimeImages(
@@ -71,6 +80,21 @@ export class DockerImageService {
     }
   }
 
+  async removeOrphanedRuntimeImages(docker: Docker): Promise<void> {
+    const olderThan = Math.floor(Date.now() / 1000) - 60 * 60;
+    const images = await docker.listImages();
+    for (const image of images) {
+      if (image.Created > olderThan) continue;
+      if (
+        !(image.RepoTags ?? []).some((tag) =>
+          tag.startsWith('icodeme-runtime-'),
+        )
+      )
+        continue;
+      await this.removeImageIfUnused(docker, image.Id);
+    }
+  }
+
   private buildImageWithDocker(
     docker: Docker,
     projectPath: string,
@@ -83,7 +107,13 @@ export class DockerImageService {
     return new Promise((resolve, reject) => {
       docker.buildImage(
         this.createTarStream(projectPath),
-        { t: imageName, rm: true, nocache: false, pull: true },
+        {
+          t: imageName,
+          rm: true,
+          nocache: false,
+          pull: true,
+          networkmode: 'none',
+        },
         (buildError, stream) => {
           if (buildError) return reject(toError(buildError));
           if (!stream) return reject(new Error('No Docker build stream'));

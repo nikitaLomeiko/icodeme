@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  OnModuleDestroy,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { FileNode, IProject } from '@modules/project';
 import Docker from 'dockerode';
@@ -19,15 +21,17 @@ import { DockerInteractiveSessionService } from './docker-interactive-session.se
 import {
   createRuntimeKey,
   createSourceHash,
-  getPortMapping,
   isDockerNotFound,
   normalizeContainerId,
   resolveMemoryLimitMb,
+  resolveRuntimeTtl,
 } from '../utils/docker-runtime.utils';
 
 @Injectable()
-export class DockerService {
+export class DockerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DockerService.name);
+  private readonly timeLimitedContainers = new Set<string>();
+  private housekeepingTimer?: NodeJS.Timeout;
   private readonly stopOperations = new Map<
     string,
     Promise<IServiceResponse<boolean, DockerError>>
@@ -35,12 +39,12 @@ export class DockerService {
   private readonly docker: Docker;
   async assertOwner(containerId: string, userId: string): Promise<void> {
     if (typeof containerId !== 'string' || !/^[a-f0-9]{64}$/.test(containerId))
-      throw new BadRequestException('Invalid container id');
+      throw new BadRequestException('Некорректный идентификатор контейнера');
     try {
       const info = await this.docker.getContainer(containerId).inspect();
       if (info.Config.Labels?.['project.user'] !== userId) throw new Error();
     } catch {
-      throw new NotFoundException('Container not found');
+      throw new NotFoundException('Контейнер не найден');
     }
   }
 
@@ -52,28 +56,28 @@ export class DockerService {
       name !== '.' &&
       name !== '..';
     if (!safe(project._id) || !safe(project.userId) || !safe(project.meta.name))
-      throw new BadRequestException('Invalid project path');
+      throw new BadRequestException('Некорректный путь проекта');
     let count = 0;
     let bytes = 0;
     const walk = (nodes: FileNode[], depth: number) => {
       if (!Array.isArray(nodes) || depth > 20)
-        throw new BadRequestException('Invalid project tree');
+        throw new BadRequestException('Некорректная структура проекта');
       for (const node of nodes) {
         if (
           ++count > 1000 ||
           !safe(node.name) ||
           node.name.toLowerCase() === 'dockerfile'
         )
-          throw new BadRequestException('Invalid file name');
+          throw new BadRequestException('Некорректное имя файла');
         bytes +=
           typeof node.content === 'string'
             ? Buffer.byteLength(node.content)
             : 0;
         if (bytes > 5 * 1024 * 1024)
-          throw new BadRequestException('Project too large');
+          throw new BadRequestException('Проект слишком большой');
         if (node.type === 'folder') walk(node.children || [], depth + 1);
         else if (node.type !== 'file' || typeof node.content !== 'string')
-          throw new BadRequestException('Invalid file');
+          throw new BadRequestException('Некорректный файл');
       }
     };
     walk(project.dir, 0);
@@ -91,6 +95,66 @@ export class DockerService {
     });
   }
 
+  async onModuleInit(): Promise<void> {
+    await this.housekeeping();
+    this.housekeepingTimer = setInterval(
+      () => void this.housekeeping(),
+      60 * 60 * 1000,
+    );
+    this.housekeepingTimer.unref?.();
+  }
+
+  onModuleDestroy(): void {
+    if (this.housekeepingTimer) clearInterval(this.housekeepingTimer);
+  }
+
+  private async housekeeping(): Promise<void> {
+    try {
+      const stale = await this.docker.listContainers({
+        all: true,
+        filters: {
+          label: ['project.managed=icodeme'],
+          status: ['exited', 'dead', 'created'],
+        },
+      });
+      await Promise.all(
+        stale.map((container) => this.stopContainer(container.Id)),
+      );
+      const running = await this.docker.listContainers({
+        all: false,
+        filters: { label: ['project.managed=icodeme'] },
+      });
+      for (const container of running) {
+        const info = await this.docker.getContainer(container.Id).inspect();
+        if (info.Config.Labels?.['project.timeLimited'] === 'true')
+          this.timeLimitedContainers.add(container.Id);
+        const configuredDeadline = Number(
+          info.Config.Labels?.['project.deadline'],
+        );
+        const createdAt = Date.parse(info.Created);
+        const deadline =
+          Number.isFinite(configuredDeadline) && configuredDeadline > 0
+            ? configuredDeadline
+            : createdAt + resolveRuntimeTtl();
+        if (!Number.isFinite(deadline) || deadline <= Date.now())
+          void this.stopContainer(container.Id);
+        else this.scheduleCleanup(container.Id, deadline - Date.now());
+      }
+      await this.imageService.removeOrphanedRuntimeImages(this.docker);
+      await this.workspace.pruneOrphans(
+        new Set(
+          running
+            .map((container) => container.Labels?.['project.runtime'])
+            .filter((key): key is string => Boolean(key)),
+        ),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Docker startup cleanup failed: ${getErrorMessage(error)}`,
+      );
+    }
+  }
+
   async createAndRunContainer(
     project: IProject,
     dockerfileContent: string,
@@ -98,8 +162,13 @@ export class DockerService {
     stepId: string,
     memoryLimitMb?: number,
     terminal = false,
+    timeLimitMs?: number,
   ): Promise<IServiceResponse<IContainerResult, DockerError>> {
     const runtimeKey = createRuntimeKey(project.userId, stepId);
+    const executionLimitMs =
+      Number.isFinite(timeLimitMs) && timeLimitMs !== undefined
+        ? Math.max(1000, Math.min(timeLimitMs, 300000))
+        : undefined;
 
     return this.coordinator.withRuntimeLock(runtimeKey, async () => {
       const basePath = this.workspace.getRuntimePath(
@@ -110,6 +179,7 @@ export class DockerService {
       const imageName = `icodeme-runtime-${runtimeKey}-${sourceHash}:latest`;
       let reservedSlot = false;
       let container: Docker.Container | null = null;
+      let builtImage = false;
       try {
         const capacityAvailable = await this.coordinator.reserveRuntimeSlot(
           this.docker,
@@ -131,16 +201,20 @@ export class DockerService {
             project.meta.language,
           );
           await this.imageService.buildImage(this.docker, basePath, imageName);
+          builtImage = true;
         }
         container = await this.createAndStartContainer(
           imageName,
           project,
           runtimeKey,
           memoryLimitMb,
+          executionLimitMs,
         );
         this.coordinator.releaseRuntimeSlot(runtimeKey);
         reservedSlot = false;
-        this.scheduleCleanup(container.id);
+        if (executionLimitMs !== undefined)
+          this.timeLimitedContainers.add(container.id);
+        this.scheduleCleanup(container.id, executionLimitMs);
         const result = await this.startInteractiveSession(
           container,
           startCommand,
@@ -165,6 +239,21 @@ export class DockerService {
           `Container startup failed: ${getErrorMessage(error)}`,
         );
         if (container) await this.stopContainer(container.id);
+        await this.workspace
+          .deleteRuntime(project.userId, runtimeKey)
+          .catch((cleanupError: unknown) =>
+            this.logger.warn(
+              `Workspace cleanup failed: ${getErrorMessage(cleanupError)}`,
+            ),
+          );
+        if (builtImage)
+          await this.imageService
+            .removeImageIfUnused(this.docker, imageName)
+            .catch((cleanupError: unknown) =>
+              this.logger.warn(
+                `Image cleanup failed: ${getErrorMessage(cleanupError)}`,
+              ),
+            );
         return { success: false, error: DockerError.IMAGE_NOT_BUILD };
       } finally {
         if (reservedSlot) this.coordinator.releaseRuntimeSlot(runtimeKey);
@@ -187,6 +276,7 @@ export class DockerService {
 
   async stopContainer(
     containerId: string,
+    timedOut = false,
   ): Promise<IServiceResponse<boolean, DockerError>> {
     const normalizedId = normalizeContainerId(containerId);
     if (!normalizedId) {
@@ -197,25 +287,30 @@ export class DockerService {
     const pendingOperation = this.stopOperations.get(normalizedId);
     if (pendingOperation) return pendingOperation;
 
-    const operation = this.stopContainerById(normalizedId).finally(() => {
-      this.stopOperations.delete(normalizedId);
-    });
+    const operation = this.stopContainerById(normalizedId, timedOut).finally(
+      () => {
+        this.stopOperations.delete(normalizedId);
+      },
+    );
     this.stopOperations.set(normalizedId, operation);
     return operation;
   }
 
   private async stopContainerById(
     normalizedId: string,
+    timedOut: boolean,
   ): Promise<IServiceResponse<boolean, DockerError>> {
     try {
       const container = this.docker.getContainer(normalizedId);
 
       let runtimeKey: string | undefined;
       let userId: string | undefined;
+      let imageId: string | undefined;
       try {
         const info = await container.inspect();
         runtimeKey = info.Config.Labels?.['project.runtime'];
         userId = info.Config.Labels?.['project.user'];
+        imageId = info.Image;
       } catch (error) {
         this.logger.error(
           `Container inspection failed: ${getErrorMessage(error)}`,
@@ -234,6 +329,14 @@ export class DockerService {
       }
 
       await container.remove({ force: true, v: true });
+      if (imageId)
+        await this.imageService
+          .removeImageIfUnused(this.docker, imageId)
+          .catch((cleanupError: unknown) =>
+            this.logger.warn(
+              `Image cleanup failed: ${getErrorMessage(cleanupError)}`,
+            ),
+          );
 
       if (
         userId &&
@@ -245,8 +348,9 @@ export class DockerService {
         this.coordinator.releaseRuntimeSlot(runtimeKey);
       }
 
-      this.sessionStore.dispose(normalizedId);
-      this.coordinator.clearCleanupTimer(normalizedId);
+      this.sessionStore.dispose(normalizedId, timedOut);
+      this.timeLimitedContainers.delete(normalizedId);
+      this.coordinator.forgetRuntime(normalizedId);
       return { success: true };
     } catch (error) {
       this.logger.error(`Container removal failed: ${getErrorMessage(error)}`);
@@ -274,8 +378,8 @@ export class DockerService {
     project: IProject,
     runtimeKey: string,
     memoryLimitMb?: number,
+    timeLimitMs?: number,
   ): Promise<Docker.Container> {
-    const portMapping = getPortMapping(project.meta.language);
     const memoryBytes = resolveMemoryLimitMb(memoryLimitMb) * 1024 * 1024;
 
     try {
@@ -302,7 +406,7 @@ export class DockerService {
             info.Config.Labels?.['project.user'] !== project.userId ||
             info.Config.Labels?.['project.runtime'] !== runtimeKey
           )
-            throw new NotFoundException('Container not found');
+            throw new NotFoundException('Контейнер не найден');
           if (info.Image) oldImageIds.add(info.Image);
         } catch (error) {
           this.logger.error(
@@ -312,7 +416,8 @@ export class DockerService {
         }
 
         this.sessionStore.dispose(existingContainerId);
-        this.coordinator.clearCleanupTimer(existingContainerId);
+        this.timeLimitedContainers.delete(existingContainerId);
+        this.coordinator.forgetRuntime(existingContainerId);
         if (candidate.State === 'running') {
           try {
             await existingContainer.stop({ t: 3 });
@@ -327,17 +432,10 @@ export class DockerService {
       const container = await this.docker.createContainer({
         Image: imageName,
         name: containerName,
-        ExposedPorts: {
-          [`${portMapping.container}/tcp`]: {},
-        },
         HostConfig: {
-          PortBindings: {
-            [`${portMapping.container}/tcp`]: [
-              {
-                HostPort: portMapping.host.toString(),
-              },
-            ],
-          },
+          NetworkMode: 'none',
+          CapDrop: ['ALL'],
+          SecurityOpt: ['no-new-privileges:true'],
           RestartPolicy: {
             Name: 'no',
           },
@@ -358,6 +456,13 @@ export class DockerService {
           'project.user': project.userId,
           'project.name': project.meta.name,
           'project.runtime': runtimeKey,
+          'project.timeLimited': String(timeLimitMs !== undefined),
+          'project.deadline': String(
+            Date.now() +
+              (Number.isFinite(timeLimitMs) && timeLimitMs !== undefined
+                ? Math.max(1000, Math.min(timeLimitMs, 300000))
+                : resolveRuntimeTtl()),
+          ),
         },
       });
 
@@ -382,9 +487,16 @@ export class DockerService {
     }
   }
 
-  private scheduleCleanup(containerId: string): void {
-    this.coordinator.scheduleCleanup(containerId, () => {
-      void this.stopContainer(containerId);
-    });
+  private scheduleCleanup(containerId: string, timeLimitMs?: number): void {
+    this.coordinator.scheduleCleanup(
+      containerId,
+      () => {
+        void this.stopContainer(
+          containerId,
+          this.timeLimitedContainers.has(containerId),
+        );
+      },
+      timeLimitMs,
+    );
   }
 }

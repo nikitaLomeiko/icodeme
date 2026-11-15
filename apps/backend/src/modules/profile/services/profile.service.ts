@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Db } from 'mongodb';
+import { Db, MongoServerError } from 'mongodb';
 import { BaseMongoRepository } from '@core/database';
 import { generateId } from '@core/helpers/generate-id';
 import {
@@ -15,9 +15,10 @@ import { ProfileStorageService } from './profile-storage.service';
 @Injectable()
 export class ProfileService {
   private readonly repositoryProfile: BaseMongoRepository<IProfile>;
+  private transactionsSupported: boolean | null = null;
 
   constructor(
-    db: Db,
+    private readonly db: Db,
     private readonly profileStorageService: ProfileStorageService,
   ) {
     const collectionProfile = db.collection(ProfileKey);
@@ -27,10 +28,10 @@ export class ProfileService {
     );
   }
 
-  async getProfileById(
-    id: string,
+  async getProfileByUserId(
+    userId: string,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {
-    const profile = await this.repositoryProfile.findOne({ userId: id });
+    const profile = await this.repositoryProfile.findOne({ userId });
 
     if (!profile) {
       return { success: false, error: ProfileError.PROFILE_NOT_FOUND };
@@ -39,27 +40,23 @@ export class ProfileService {
     return { success: true, data: profile };
   }
 
-  async createNewProfile(
+  async createProfile(
     userId: string,
     data: IProfileData,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {
-    const profile = await this.repositoryProfile.findOne({
-      userId: userId,
-    });
+    const profile = await this.repositoryProfile.findOne({ userId });
 
     if (profile) {
-      return {
-        success: false,
-        error: ProfileError.PROFILE_ALREADY_CREATED,
-      };
+      await this.profileStorageService.initialize(userId, profile._id);
+      return { success: true, data: profile };
     }
 
     const now = new Date();
 
     const newProfile: IProfile = {
       _id: generateId(userId),
-      userId: userId,
-      data: data,
+      userId,
+      data,
       level: {
         experienceToNextLevel: 10,
         currentLevel: 1,
@@ -70,47 +67,106 @@ export class ProfileService {
       updatedAt: now,
     };
 
-    await this.repositoryProfile.create(newProfile);
+    try {
+      if (this.transactionsSupported !== false) {
+        const session = this.db.client.startSession();
+        try {
+          await session.withTransaction(async () => {
+            await this.db
+              .collection<IProfile>(ProfileKey)
+              .insertOne(newProfile, { session });
+            await this.profileStorageService.initialize(
+              userId,
+              newProfile._id,
+              session,
+            );
+          });
+          this.transactionsSupported = true;
+          return { success: true, data: newProfile };
+        } catch (error) {
+          if (!this.isUnsupportedTransaction(error)) throw error;
+          this.transactionsSupported = false;
+        } finally {
+          await session.endSession();
+        }
+      }
+      await this.repositoryProfile.create(newProfile);
+    } catch (error) {
+      const existing = await this.repositoryProfile.findOne({ userId });
+      if (!existing) throw error;
+      await this.profileStorageService.initialize(userId, existing._id);
+      return { success: true, data: existing };
+    }
     await this.profileStorageService.initialize(userId, newProfile._id);
 
     return { success: true, data: newProfile };
   }
 
-  async changeProfileDataById(
-    data: IProfileData,
-    id: string,
+  async updateProfileData(
+    data: Pick<IProfileData, 'avatar' | 'name' | 'about'>,
+    userId: string,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {
-    const profile = await this.repositoryProfile.findOne({ userId: id });
+    const profile = await this.repositoryProfile.findOne({ userId });
 
     if (!profile) {
       return { success: false, error: ProfileError.USER_NOT_FOUND };
     }
 
+    const updatedData = { ...profile.data, ...data };
     const result = await this.repositoryProfile.update(
-      { userId: id },
-      { ...profile, data },
+      { userId },
+      { data: updatedData },
     );
 
     if (!result) {
       return { success: false, error: ProfileError.USER_NOT_FOUND };
     }
 
-    return { success: true, data: { ...profile, data } };
+    return { success: true, data: { ...profile, data: updatedData } };
   }
 
-  async removeProfileById(
-    id: string,
+  async deleteProfileByUserId(
+    userId: string,
   ): Promise<IServiceResponse<null, ProfileError>> {
-    const result = await this.repositoryProfile.delete({ userId: id });
-
-    if (!result) {
-      return { success: false, error: ProfileError.USER_NOT_FOUND };
+    let removed = false;
+    if (this.transactionsSupported !== false) {
+      const session = this.db.client.startSession();
+      try {
+        await session.withTransaction(async () => {
+          const result = await this.db
+            .collection<IProfile>(ProfileKey)
+            .deleteOne({ userId }, { session });
+          removed = result.deletedCount > 0;
+          await this.profileStorageService.deleteByUserId(userId, session);
+        });
+        this.transactionsSupported = true;
+        return removed
+          ? { success: true }
+          : { success: false, error: ProfileError.USER_NOT_FOUND };
+      } catch (error) {
+        if (!this.isUnsupportedTransaction(error)) throw error;
+        this.transactionsSupported = false;
+      } finally {
+        await session.endSession();
+      }
     }
-
-    return { success: true };
+    removed = await this.repositoryProfile.delete({ userId });
+    await this.profileStorageService.deleteByUserId(userId);
+    return removed
+      ? { success: true }
+      : { success: false, error: ProfileError.USER_NOT_FOUND };
   }
 
-  async setExperienceById(
+  private isUnsupportedTransaction(error: unknown): boolean {
+    return (
+      error instanceof MongoServerError &&
+      (error.code === 20 ||
+        error.code === 303 ||
+        /transaction numbers are only allowed/i.test(error.message))
+    );
+  }
+
+  async addExperienceByUserId(
     exp: number,
     userId: string,
   ): Promise<IServiceResponse<IProfile, ProfileError>> {

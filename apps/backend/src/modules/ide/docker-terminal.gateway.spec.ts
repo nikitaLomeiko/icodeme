@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import type { AddressInfo } from 'net';
 import { WebSocket } from 'ws';
+import { MongoServerError } from 'mongodb';
 import { DockerTerminalGateway } from './docker-terminal.gateway';
 
 describe('DockerTerminalGateway', () => {
@@ -34,9 +35,23 @@ describe('DockerTerminalGateway', () => {
     const jwtService = {
       verifyAsync: jest.fn(async () => ticket),
     };
+    const consumed = new Set<string>();
+    const db = {
+      collection: () => ({
+        insertOne: async ({ _id }: { _id: string }) => {
+          if (consumed.has(_id))
+            throw new MongoServerError({
+              code: 11000,
+              errmsg: 'duplicate key',
+            });
+          consumed.add(_id);
+        },
+      }),
+    };
     const gateway = new DockerTerminalGateway(
       dockerService as never,
       jwtService as never,
+      db as never,
     );
     const server = createServer();
     gateway.attach(server);

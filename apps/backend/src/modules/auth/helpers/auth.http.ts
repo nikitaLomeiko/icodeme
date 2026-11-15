@@ -44,7 +44,7 @@ export function clearSession(res: Response) {
 }
 export function requireOrigin(req: Request) {
   if (!req.headers.origin || !allowedOrigins().includes(req.headers.origin))
-    throw new ForbiddenException('Untrusted request origin');
+    throw new ForbiddenException('Недоверенный источник запроса');
 }
 export function textField(
   body: unknown,
@@ -61,6 +61,6 @@ export function textField(
     ((key === 'password' || key === 'newPassword') &&
       Buffer.byteLength(value) > 72)
   )
-    throw new BadRequestException(`Invalid ${key}`);
+    throw new BadRequestException(`Некорректное поле: ${key}`);
   return value;
 }

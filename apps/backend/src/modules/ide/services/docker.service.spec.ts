@@ -194,10 +194,13 @@ describe('DockerService runtime lifecycle', () => {
     expect(created[0].name).toBe(`icodeme-runtime-${runtimeKey}`);
     expect(created[0].RestartPolicy).toBeUndefined();
     expect(created[0].HostConfig.RestartPolicy.Name).toBe('no');
+    expect(created[0].HostConfig.NetworkMode).toBe('none');
+    expect(created[0].HostConfig.PortBindings).toBeUndefined();
+    expect(created[0].HostConfig.CapDrop).toContain('ALL');
     expect(removeImage).toHaveBeenCalledTimes(1);
   });
 
-  it('removes the container and workspace while retaining the cached runtime image', async () => {
+  it('removes the container, workspace and unused runtime image', async () => {
     const { calls, storage } = storageFixture();
     const { service } = serviceFixture(storage);
     const containerId = '1'.repeat(64);
@@ -208,6 +211,7 @@ describe('DockerService runtime lifecycle', () => {
     service.docker = {
       getContainer: () => ({
         inspect: async () => ({
+          Image: `sha256:${'3'.repeat(64)}`,
           Config: {
             Image: `icodeme-runtime-${runtimeKey}:latest`,
             Labels: {
@@ -220,6 +224,7 @@ describe('DockerService runtime lifecycle', () => {
         remove,
       }),
       getImage: () => ({ remove: removeImage }),
+      listContainers: async () => [],
     };
 
     const result = await service.stopContainer(containerId);
@@ -227,7 +232,7 @@ describe('DockerService runtime lifecycle', () => {
     expect(result.success).toBe(true);
     expect(stop).toHaveBeenCalledTimes(1);
     expect(remove).toHaveBeenCalledWith({ force: true, v: true });
-    expect(removeImage).not.toHaveBeenCalled();
+    expect(removeImage).toHaveBeenCalledWith({ force: false });
     expect(calls).toContainEqual(
       expect.stringMatching(new RegExp(`delete:.*${runtimeKey}$`)),
     );

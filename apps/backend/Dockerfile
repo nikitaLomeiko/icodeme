@@ -39,6 +39,8 @@ ENV NODE_ENV=production \
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./package.json
+COPY data/prompts ./prompts
+ENV PROMPT_DIR=/app/prompts
 
 RUN mkdir -p /app/data/containers
 

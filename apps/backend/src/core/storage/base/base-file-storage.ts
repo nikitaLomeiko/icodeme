@@ -8,6 +8,10 @@ export class BaseFileStorage extends BaseStorage {
     return fs.readFileSync(path, 'utf-8');
   }
 
+  readFileAsync(path: string): Promise<string> {
+    return fs.promises.readFile(path, 'utf-8');
+  }
+
   writeFile(path: string, content: string): void {
     fs.writeFileSync(path, content, 'utf-8');
   }

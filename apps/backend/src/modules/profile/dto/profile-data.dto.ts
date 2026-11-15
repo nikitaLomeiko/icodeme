@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsString, MaxLength, ValidateNested } from 'class-validator';
 
 export class CreateProfileDataDto {
   @IsString()
@@ -21,17 +15,6 @@ export class CreateProfileDataDto {
   about: string;
 }
 
-export class ProfileDataDto extends CreateProfileDataDto {
-  @IsArray()
-  @ArrayMaxSize(50)
-  @IsString({ each: true })
-  chips: string[];
-
-  @IsString()
-  @MaxLength(100)
-  position: string;
-}
-
 export class CreateProfileDto {
   @ValidateNested()
   @Type(() => CreateProfileDataDto)
@@ -40,6 +23,6 @@ export class CreateProfileDto {
 
 export class UpdateProfileDto {
   @ValidateNested()
-  @Type(() => ProfileDataDto)
-  profileData: ProfileDataDto;
+  @Type(() => CreateProfileDataDto)
+  profileData: CreateProfileDataDto;
 }

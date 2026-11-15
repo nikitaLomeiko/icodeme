@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { IncomingMessage, Server } from 'http';
 import type { Duplex } from 'stream';
 import { WebSocketServer } from 'ws';
+import { Db, MongoServerError } from 'mongodb';
 import { allowedOrigins } from '@core/config/app/allowed-origins';
 import { DockerService } from './services/docker.service';
 
@@ -17,11 +18,11 @@ interface ITerminalTicket {
 @Injectable()
 export class DockerTerminalGateway {
   private readonly logger = new Logger(DockerTerminalGateway.name);
-  private readonly usedTickets = new Map<string, number>();
 
   constructor(
     private readonly dockerService: DockerService,
     private readonly jwtService: JwtService,
+    private readonly db: Db,
   ) {}
 
   attach(server: Server): void {
@@ -76,7 +77,7 @@ export class DockerTerminalGateway {
         typeof ticket.containerId !== 'string' ||
         typeof ticket.jti !== 'string' ||
         ticket.exp * 1000 <= Date.now() ||
-        this.consumeTicket(ticket.jti, ticket.exp * 1000)
+        (await this.consumeTicket(ticket.jti, ticket.exp * 1000))
       ) {
         this.logger.warn('Rejected invalid or reused ticket');
         this.reject(socket, 401, 'Unauthorized');
@@ -107,14 +108,23 @@ export class DockerTerminalGateway {
     }
   }
 
-  private consumeTicket(ticketId: string, expiresAt: number): boolean {
-    const now = Date.now();
-    for (const [id, expiry] of this.usedTickets) {
-      if (expiry <= now) this.usedTickets.delete(id);
+  private async consumeTicket(
+    ticketId: string,
+    expiresAt: number,
+  ): Promise<boolean> {
+    try {
+      await this.db
+        .collection<{ _id: string; expiresAt: Date }>('dockerTerminalTickets')
+        .insertOne({
+          _id: ticketId,
+          expiresAt: new Date(expiresAt),
+        });
+      return false;
+    } catch (error) {
+      if (error instanceof MongoServerError && error.code === 11000)
+        return true;
+      throw error;
     }
-    if (this.usedTickets.has(ticketId)) return true;
-    this.usedTickets.set(ticketId, expiresAt);
-    return false;
   }
 
   private reject(socket: Duplex, status: number, message: string): void {

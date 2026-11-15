@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'crypto';
 import { hashToken } from '../helpers/token.helper';
 import { Injectable } from '@nestjs/common';
-import { Db } from 'mongodb';
+import { Db, MongoServerError } from 'mongodb';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -65,9 +65,10 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<IServiceResponse<IAuthResponse, AuthError>> {
-    const existingUser = await this.repositoryUser.findOne({
-      email: email,
-    });
+    const existingUser = await this.repositoryUser.findOne(
+      { email: email.trim().toLowerCase() },
+      { collation: { locale: 'en', strength: 2 } },
+    );
 
     if (!existingUser) {
       return { success: false, error: AuthError.INVALID_CREDENTIALS };
@@ -102,9 +103,11 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<IServiceResponse<IUserIdResponse, AuthError>> {
-    const existingUser = await this.repositoryUser.findOne({
-      email: email,
-    });
+    email = email.trim().toLowerCase();
+    const existingUser = await this.repositoryUser.findOne(
+      { email },
+      { collation: { locale: 'en', strength: 2 } },
+    );
 
     if (existingUser) {
       return { success: false, error: AuthError.USER_EXISTS };
@@ -124,7 +127,14 @@ export class AuthService {
       isResetPassword: false,
     };
 
-    const resultCreatedUser = await this.repositoryUser.create(newUser);
+    let resultCreatedUser: string;
+    try {
+      resultCreatedUser = await this.repositoryUser.create(newUser);
+    } catch (error) {
+      if (error instanceof MongoServerError && error.code === 11000)
+        return { success: false, error: AuthError.USER_EXISTS };
+      throw error;
+    }
 
     if (!resultCreatedUser) {
       return {
@@ -219,7 +229,10 @@ export class AuthService {
     email: string,
     purpose: 'email' | 'reset' = 'email',
   ): Promise<IServiceResponse<IUserIdResponse, AuthError>> {
-    const user = await this.repositoryUser.findOne({ email });
+    const user = await this.repositoryUser.findOne(
+      { email: email.trim().toLowerCase() },
+      { collation: { locale: 'en', strength: 2 } },
+    );
 
     if (!user) {
       return {

@@ -27,7 +27,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       !profile._json?.email_verified ||
       !profile.emails?.[0]?.value
     )
-      throw new UnauthorizedException('Verified Google email required');
+      throw new UnauthorizedException('Требуется подтверждённая почта Google');
     const { name, emails, photos } = profile;
 
     return {

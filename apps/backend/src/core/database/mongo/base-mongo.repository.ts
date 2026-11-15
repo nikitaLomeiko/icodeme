@@ -1,4 +1,11 @@
-import { Collection, Document, Filter, OptionalId, WithId } from 'mongodb';
+import {
+  Collection,
+  Document,
+  Filter,
+  FindOptions,
+  OptionalId,
+  WithId,
+} from 'mongodb';
 import { BaseEntity } from '@core/types/base-entity.abstract';
 import { BaseRepository } from '../types/base-repository.abstract';
 import { getErrorMessage } from '@core/helpers/error-message';
@@ -9,19 +16,15 @@ export class BaseMongoRepository<
   constructor(protected collection: Collection) {}
 
   async create(data: T): Promise<string> {
-    try {
-      const doc = {
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      const result = await this.collection.insertOne(
-        doc as unknown as OptionalId<Document>,
-      );
-      return result.insertedId.toString();
-    } catch (error) {
-      throw new Error(`Failed to create document: ${getErrorMessage(error)}`);
-    }
+    const doc = {
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const result = await this.collection.insertOne(
+      doc as unknown as OptionalId<Document>,
+    );
+    return result.insertedId.toString();
   }
 
   async find(filter?: Partial<T>): Promise<T[]> {
@@ -34,11 +37,11 @@ export class BaseMongoRepository<
     }
   }
 
-  async findOne(filter: Partial<T>): Promise<T | null> {
+  async findOne(filter: Partial<T>, options?: FindOptions): Promise<T | null> {
     try {
       const mongoFilter = this.mapToMongoFilter(filter);
-      const result = await this.collection.findOne(mongoFilter);
-      return result ? this.mapToEntity(result) : null;
+      const result = await this.collection.findOne(mongoFilter, options);
+      return result ? this.mapToEntity(result as WithId<Document>) : null;
     } catch (error) {
       throw new Error(`Failed to find document: ${getErrorMessage(error)}`);
     }

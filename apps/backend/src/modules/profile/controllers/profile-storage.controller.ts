@@ -24,17 +24,17 @@ export class ProfileStorageController {
   constructor(private readonly profileStorageService: ProfileStorageService) {}
 
   @Get('document/favorite')
-  async getDocumentFavorites(
+  async getDocumentFavorite(
     @CurrentUser() user: AuthenticatedUser,
     @Query('documentId') documentId: string,
-  ): Promise<IControllerResponse<IFavorite>> {
-    const result = await this.profileStorageService.getDocumentFavorites(
+  ): Promise<IControllerResponse<IFavorite | null>> {
+    const result = await this.profileStorageService.getDocumentFavorite(
       user.userId,
       documentId,
     );
 
-    if (result.error === ProfileError.PROFILE_NOT_FOUND) {
-      throw new NotFoundException('Profile not found');
+    if (result.error === ProfileError.USER_NOT_FOUND) {
+      throw new NotFoundException('Профиль не найден');
     }
 
     return result;
@@ -52,7 +52,7 @@ export class ProfileStorageController {
     );
 
     if (!result.success) {
-      throw new BadRequestException('Error when creating a profile');
+      throw new BadRequestException('Не удалось добавить избранное');
     }
 
     return result;
@@ -70,7 +70,7 @@ export class ProfileStorageController {
     );
 
     if (!result.success) {
-      throw new NotFoundException(result.error);
+      throw new NotFoundException('Запись избранного не найдена');
     }
 
     return result;

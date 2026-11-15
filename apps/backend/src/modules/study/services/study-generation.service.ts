@@ -9,10 +9,14 @@ import { TypeGuards as StudyTypeGuards } from '../guards/study-type.guards';
 import { applyPromptVariables } from '../helpers/apply-prompt-variables';
 import { extractJsonFromMarkdown } from '../helpers/extract-json-from-markdown';
 import { StudyError } from '../types';
+import { join, resolve } from 'path';
 
 @Injectable()
 export class StudyGenerationService {
-  private readonly promptPath = 'data/prompts';
+  private readonly promptPath = resolve(
+    process.env.PROMPT_DIR || 'data/prompts',
+  );
+  private readonly promptCache = new Map<string, Promise<string>>();
 
   constructor(
     private readonly chat: ChatSession,
@@ -81,7 +85,9 @@ export class StudyGenerationService {
       'generate_documentation.txt',
       this.stepPromptVariables(module, level, step, language),
     );
-    return { success: true, data: answer };
+    return answer.length <= 50000
+      ? { success: true, data: answer }
+      : { success: false, error: StudyError.INVALID_DOCUMENTATION_RESPONSE };
   }
 
   async generatePractice(
@@ -94,7 +100,9 @@ export class StudyGenerationService {
       'generate_practice.txt',
       this.stepPromptVariables(module, level, step, language),
     );
-    return { success: true, data: answer };
+    return answer.length <= 50000
+      ? { success: true, data: answer }
+      : { success: false, error: StudyError.INVALID_PRACTICE_RESPONSE };
   }
 
   async generateQuiz(
@@ -132,16 +140,26 @@ export class StudyGenerationService {
       task_description: task.description,
     });
     const trimmed = answer.trim();
-    return { success: true, data: trimmed === '200' ? 200 : trimmed };
+    return trimmed.length <= 10000
+      ? { success: true, data: trimmed === '200' ? 200 : trimmed }
+      : { success: false, error: StudyError.INVALID_CODE_RESPONSE };
   }
 
-  private sendPrompt(
+  private async sendPrompt(
     filename: string,
     variables: Record<string, string>,
   ): Promise<string> {
-    const template = this.fileStorage.readFile(
-      `${this.promptPath}/${filename}`,
-    );
+    let templatePromise = this.promptCache.get(filename);
+    if (!templatePromise) {
+      templatePromise = this.fileStorage.readFileAsync(
+        join(this.promptPath, filename),
+      );
+      this.promptCache.set(filename, templatePromise);
+    }
+    const template = await templatePromise.catch((error: unknown) => {
+      this.promptCache.delete(filename);
+      throw error;
+    });
     return this.chat.send(applyPromptVariables(template, variables));
   }
 
@@ -177,6 +195,8 @@ export class StudyGenerationService {
     invalidResponseError: StudyError,
     parseError: StudyError,
   ): IServiceResponse<T, StudyError> {
+    if (answer.length > 128 * 1024)
+      return { success: false, error: invalidResponseError };
     try {
       const parsed: unknown = JSON.parse(extractJsonFromMarkdown(answer));
       return isValid(parsed)

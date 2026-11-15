@@ -1,8 +1,8 @@
-import { IModule, IStep, IStudy, StudyKey } from '../models';
+import { ILevel, IModule, IQuiz, IStep, IStudy, StudyKey } from '../models';
 import { Injectable } from '@nestjs/common';
 import { IServiceResponse } from '@core/types/response.type';
 import { StudyError } from '../types';
-import { Db } from 'mongodb';
+import { Collection, Db } from 'mongodb';
 import { BaseMongoRepository } from '@core/database';
 import { generateId } from '@core/helpers/generate-id';
 import { randomUUID } from 'crypto';
@@ -10,18 +10,19 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class StudyService {
   private readonly repositoryStudy: BaseMongoRepository<IStudy>;
+  private readonly collection: Collection<IStudy>;
 
   constructor(db: Db) {
-    const collectionStudy = db.collection(StudyKey);
-    this.repositoryStudy = new BaseMongoRepository<IStudy>(collectionStudy);
+    this.collection = db.collection<IStudy>(StudyKey);
+    this.repositoryStudy = new BaseMongoRepository<IStudy>(
+      db.collection(StudyKey),
+    );
   }
 
-  async getStudyByUserId(
+  async getStudiesByUserId(
     userId: string,
   ): Promise<IServiceResponse<IStudy[], StudyError>> {
-    const study = await this.repositoryStudy.find({
-      userId: userId,
-    });
+    const study = await this.repositoryStudy.find({ userId });
 
     return { success: true, data: study.map((item) => this.withStepIds(item)) };
   }
@@ -81,22 +82,27 @@ export class StudyService {
     };
   }
 
-  async createNewStudy(
+  async createStudy(
     context: string,
     userId: string,
   ): Promise<IServiceResponse<IStudy, StudyError>> {
     const now = new Date();
+    const trimmedContext = context.trim();
+    const title =
+      trimmedContext.length > 0 && trimmedContext.length <= 60
+        ? trimmedContext
+        : 'Персональный учебный план';
 
     const newStudy: IStudy = {
-      title: 'Generate AI',
-      description: 'Generate AI',
+      title,
+      description: 'Персональный план изучения программирования',
       _id: randomUUID(),
-      userId: userId,
+      userId,
       levelPlanJSON: [],
       level: {
         experienceToNextLevel: 10,
         positionCount: 0,
-        positionName: 'Beginner',
+        positionName: 'Новичок',
       },
       studyPlanJSON: [],
       study: {
@@ -116,7 +122,7 @@ export class StudyService {
     return { success: true, data: newStudy };
   }
 
-  async removeStudyById(
+  async deleteStudyByIdAndUserId(
     id: string,
     userId: string,
   ): Promise<IServiceResponse<null, StudyError>> {
@@ -135,26 +141,73 @@ export class StudyService {
     return { success: true, data: null };
   }
 
-  async changeStudyPlanById(
-    studyPlanJSON: IModule[],
+  async setModulesIfEmpty(
+    userId: string,
     id: string,
-  ): Promise<IServiceResponse<IStudy, StudyError>> {
-    const study = await this.repositoryStudy.findOne({ _id: id });
+    modules: IModule[],
+  ): Promise<boolean> {
+    const result = await this.collection.updateOne(
+      { _id: id, userId, 'studyPlanJSON.0': { $exists: false } },
+      { $set: { studyPlanJSON: modules, updatedAt: new Date() } },
+    );
+    return result.matchedCount > 0;
+  }
 
-    if (!study) {
-      return { success: false, error: StudyError.USER_NOT_FOUND };
-    }
+  async setLevelsIfEmpty(
+    userId: string,
+    id: string,
+    moduleIndex: number,
+    levels: ILevel[],
+  ): Promise<boolean> {
+    const path = `studyPlanJSON.${moduleIndex}.levels`;
+    const result = await this.collection.updateOne(
+      {
+        _id: id,
+        userId,
+        [`studyPlanJSON.${moduleIndex}`]: { $exists: true },
+        [`${path}.0`]: { $exists: false },
+      },
+      { $set: { [path]: levels, updatedAt: new Date() } },
+    );
+    return result.modifiedCount > 0;
+  }
 
-    const now = new Date();
+  async setStepsIfEmpty(
+    userId: string,
+    id: string,
+    moduleIndex: number,
+    levelIndex: number,
+    steps: IStep[],
+  ): Promise<boolean> {
+    const path = `studyPlanJSON.${moduleIndex}.levels.${levelIndex}.steps`;
+    const result = await this.collection.updateOne(
+      {
+        _id: id,
+        userId,
+        [`studyPlanJSON.${moduleIndex}.levels.${levelIndex}`]: {
+          $exists: true,
+        },
+        [`${path}.0`]: { $exists: false },
+      },
+      { $set: { [path]: steps, updatedAt: new Date() } },
+    );
+    return result.modifiedCount > 0;
+  }
 
-    const newStudy = { ...study, studyPlanJSON, updatedAt: now };
-
-    const result = await this.repositoryStudy.update({ _id: id }, newStudy);
-
-    if (!result) {
-      return { success: false, error: StudyError.USER_NOT_FOUND };
-    }
-
-    return { success: true, data: newStudy };
+  async setStepContent(
+    userId: string,
+    id: string,
+    moduleIndex: number,
+    levelIndex: number,
+    stepIndex: number,
+    kind: 'document' | 'code' | 'quiz',
+    value: string | IQuiz,
+  ): Promise<boolean> {
+    const path = `studyPlanJSON.${moduleIndex}.levels.${levelIndex}.steps.${stepIndex}`;
+    const result = await this.collection.updateOne(
+      { _id: id, userId, [path]: { $exists: true } },
+      { $set: { [`${path}.${kind}`]: value, updatedAt: new Date() } },
+    );
+    return result.matchedCount > 0;
   }
 }
